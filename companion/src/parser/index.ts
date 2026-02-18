@@ -104,8 +104,8 @@ export class ParserOrchestrator {
           defensiveAudit: idx === 0 ? defensiveAudit : buildDefensiveAudit(s, r, d),
         };
       }),
-      trend,
-      distribution,
+      ...(trend !== undefined ? { trend } : {}),
+      ...(distribution !== undefined ? { distribution } : {}),
     });
 
     return { session, luaContent, sessionDbId };

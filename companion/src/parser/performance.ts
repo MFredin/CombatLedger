@@ -125,7 +125,7 @@ export function buildPerformanceReport(
   // Single pass over all events — damage and heals only
   // ---------------------------------------------------------------------------
   for (const ev of session.events) {
-    if (!isPlayer(ev.sourceFlags)) continue;
+    if (!("sourceFlags" in ev) || !isPlayer(ev.sourceFlags)) continue;
 
     const sub = ev.subevent;
 

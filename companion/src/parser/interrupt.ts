@@ -94,7 +94,7 @@ export function buildInterruptReport(session: EncounterSession): InterruptReport
           p.castStart.spellId === interrupt.extraSpellId
       );
       if (pendingIdx !== -1) {
-        const pending = pendingCasts.splice(pendingIdx, 1)[0];
+        const pending = pendingCasts.splice(pendingIdx, 1)[0]!;
         const meta = getEnemySpell(dungeon, pending.castStart.spellId);
         const castDurationMs = (meta?.castDurationSec ?? 0) * 1000;
         const elapsedMs = interrupt.timestamp.getTime() - pending.startMs;
@@ -132,7 +132,7 @@ export function buildInterruptReport(session: EncounterSession): InterruptReport
           p.castStart.spellId === success.spellId
       );
       if (pendingIdx !== -1) {
-        const pending = pendingCasts.splice(pendingIdx, 1)[0];
+        const pending = pendingCasts.splice(pendingIdx, 1)[0]!;
         const meta = getEnemySpell(dungeon, pending.castStart.spellId);
         const castDurationMs = (meta?.castDurationSec ?? 0) * 1000;
 

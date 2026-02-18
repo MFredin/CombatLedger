@@ -55,6 +55,10 @@ function luaDate(d: Date): string {
   return String(Math.floor(d.getTime() / 1000));
 }
 
+interface LuaTable {
+  [key: string]: LuaValue;
+}
+
 type LuaValue =
   | string
   | number
@@ -63,7 +67,7 @@ type LuaValue =
   | null
   | undefined
   | LuaValue[]
-  | Record<string, LuaValue>;
+  | LuaTable;
 
 function toLuaValue(val: LuaValue, indent = 0): string {
   if (val === null || val === undefined) return "nil";
@@ -72,7 +76,7 @@ function toLuaValue(val: LuaValue, indent = 0): string {
   if (typeof val === "string") return luaStr(val);
   if (val instanceof Date) return luaDate(val);
   if (Array.isArray(val)) return toLuaArray(val, indent);
-  return toLuaTable(val as Record<string, LuaValue>, indent);
+  return toLuaTable(val as LuaTable, indent);
 }
 
 function toLuaArray(arr: LuaValue[], indent: number): string {
@@ -83,7 +87,7 @@ function toLuaArray(arr: LuaValue[], indent: number): string {
   return `{\n${items.join(",\n")}\n${closePad}}`;
 }
 
-function toLuaTable(obj: Record<string, LuaValue>, indent: number): string {
+function toLuaTable(obj: LuaTable, indent: number): string {
   const keys = Object.keys(obj);
   if (keys.length === 0) return "{}";
   const pad = "  ".repeat(indent + 1);
