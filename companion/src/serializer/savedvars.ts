@@ -11,6 +11,9 @@
 import type { EncounterSession } from "../parser/session.js";
 import type { DeathRecap } from "../parser/death.js";
 import type { InterruptReport } from "../parser/interrupt.js";
+import type { CCCoverage } from "../parser/cc.js";
+import type { PerformanceReport } from "../parser/performance.js";
+import type { DefensiveAuditReport } from "../parser/defensive.js";
 
 const MAX_SESSION_BYTES = 500_000;
 
@@ -22,6 +25,9 @@ interface SerialiseInput {
     session: EncounterSession;
     deaths: DeathRecap[];
     interrupts: InterruptReport;
+    ccCoverage?: CCCoverage[];
+    performance?: PerformanceReport;
+    defensiveAudit?: DefensiveAuditReport;
   }>;
 }
 
@@ -84,13 +90,95 @@ function toLuaTable(obj: Record<string, LuaValue>, indent: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// Session → Lua-value conversion
+// Session → Lua-value conversion helpers
 // ---------------------------------------------------------------------------
+
+function ccCoverageToLuaValue(cc: CCCoverage[]): LuaValue[] {
+  return cc.map((target) => ({
+    targetGUID: target.targetGUID,
+    targetName: target.targetName,
+    targetType: target.targetType,
+    totalCombatDuration: Math.round(target.totalCombatDuration),
+    coveredDuration: Math.round(target.coveredDuration * 10) / 10,
+    coveragePercent: target.coveragePercent,
+    wastedCasts: target.wastedCasts,
+    segments: target.segments.map((s) => ({
+      sourceName: s.sourceName,
+      spellId: s.spellId,
+      spellName: s.spellName,
+      ccCategory: s.ccCategory,
+      startTime: Math.floor(s.startTime.getTime() / 1000),
+      endTime: Math.floor(s.endTime.getTime() / 1000),
+      theoreticalDuration: Math.round(s.theoreticalDuration * 10) / 10,
+      actualDuration: Math.round(s.actualDuration * 10) / 10,
+      drMultiplier: s.drMultiplier,
+      drApplicationNumber: s.drApplicationNumber,
+      brokeEarly: s.brokeEarly,
+      brokeReason: s.brokeReason ?? null,
+      wasImmune: s.wasImmune,
+    })) as LuaValue[],
+    byCategory: Object.fromEntries(
+      Object.entries(target.byCategory).map(([k, v]) => [
+        k,
+        { coveredDuration: v.coveredDuration, segments: v.segments, wastedCasts: v.wastedCasts },
+      ])
+    ) as Record<string, LuaValue>,
+  })) as LuaValue[];
+}
+
+function performanceToLuaValue(perf: PerformanceReport): LuaValue {
+  return {
+    encounterDurationSec: Math.round(perf.encounterDurationSec),
+    totalDamageDone: perf.totalDamageDone,
+    totalHealingDone: perf.totalHealingDone,
+    players: perf.players.map((p) => ({
+      playerGUID: p.playerGUID,
+      playerName: p.playerName,
+      playerClass: p.playerClass,
+      playerSpec: p.playerSpec,
+      damageDone: p.damageDone,
+      healingDone: p.healingDone,
+      overhealing: p.overhealing,
+      interruptCount: p.interruptCount,
+      deathCount: p.deathCount,
+      ccApplied: p.ccApplied,
+      dps: Math.round(p.dps),
+      hps: Math.round(p.hps),
+    })) as LuaValue[],
+  };
+}
+
+function defensiveAuditToLuaValue(audit: DefensiveAuditReport): LuaValue {
+  return {
+    players: audit.players.map((p) => ({
+      playerGUID: p.playerGUID,
+      playerName: p.playerName,
+      playerClass: p.playerClass,
+      playerSpec: p.playerSpec,
+      totalUses: p.totalUses,
+      uses: p.uses.map((u) => ({
+        timeIntoPull: Math.round(u.timeIntoPull),
+        spellId: u.spellId,
+        spellName: u.spellName,
+        cooldownSec: u.cooldownSec,
+      })) as LuaValue[],
+      missedAtDeath: p.missedAtDeath.map((m) => ({
+        spellId: m.spellId,
+        spellName: m.spellName,
+        cooldownSec: m.cooldownSec,
+        secSinceLastUse: m.secSinceLastUse ?? null,
+      })) as LuaValue[],
+    })) as LuaValue[],
+  };
+}
 
 function sessionToLuaValue(
   session: EncounterSession,
   deaths: DeathRecap[],
-  interrupts: InterruptReport
+  interrupts: InterruptReport,
+  ccCoverage?: CCCoverage[],
+  performance?: PerformanceReport,
+  defensiveAudit?: DefensiveAuditReport,
 ): Record<string, LuaValue> {
   return {
     encounterId: session.encounterId,
@@ -137,6 +225,7 @@ function sessionToLuaValue(
         available: def.available,
       })) as LuaValue[],
     })) as LuaValue[],
+    ccCoverage: ccCoverage ? ccCoverageToLuaValue(ccCoverage) : [],
     interrupts: {
       encounterId: interrupts.encounterId,
       summary: {
@@ -165,6 +254,8 @@ function sessionToLuaValue(
         ])
       ) as Record<string, LuaValue>,
     },
+    performance: performance ? performanceToLuaValue(performance) : {},
+    defensiveAudit: defensiveAudit ? defensiveAuditToLuaValue(defensiveAudit) : {},
   };
 }
 
@@ -173,8 +264,9 @@ function sessionToLuaValue(
 // ---------------------------------------------------------------------------
 
 export function serializeToLua(input: SerialiseInput): string {
-  const sessionValues: LuaValue[] = input.sessions.map(({ session, deaths, interrupts }) =>
-    sessionToLuaValue(session, deaths, interrupts)
+  const sessionValues: LuaValue[] = input.sessions.map(
+    ({ session, deaths, interrupts, ccCoverage, performance, defensiveAudit }) =>
+      sessionToLuaValue(session, deaths, interrupts, ccCoverage, performance, defensiveAudit)
   );
 
   const db: Record<string, LuaValue> = {

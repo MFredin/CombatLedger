@@ -63,6 +63,24 @@ function Data:GetInterrupts(session)
     return session.interrupts or {}
 end
 
+--- Returns the CC coverage array for a session.
+function Data:GetCCCoverage(session)
+    if not session then return {} end
+    return session.ccCoverage or {}
+end
+
+--- Returns the performance report for a session.
+function Data:GetPerformance(session)
+    if not session then return {} end
+    return session.performance or {}
+end
+
+--- Returns the defensive audit report for a session.
+function Data:GetDefensiveAudit(session)
+    if not session then return {} end
+    return session.defensiveAudit or {}
+end
+
 --- Format a duration in seconds as "Xm Ys" or "Xs".
 function Data:FormatDuration(sec)
     sec = math.floor(sec or 0)

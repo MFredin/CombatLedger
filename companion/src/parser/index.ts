@@ -9,6 +9,9 @@ import { parseLine } from "./cleu.js";
 import { SessionSegmenter } from "./session.js";
 import { buildDeathRecaps } from "./death.js";
 import { buildInterruptReport } from "./interrupt.js";
+import { buildCCCoverage } from "./cc.js";
+import { buildPerformanceReport } from "./performance.js";
+import { buildDefensiveAudit } from "./defensive.js";
 import { GuidResolver } from "../enrichment/guid.js";
 import { serializeToLua } from "../serializer/savedvars.js";
 import type { EncounterSession } from "./session.js";
@@ -56,19 +59,28 @@ export class ParserOrchestrator {
 
     const deaths = buildDeathRecaps(session, resolver);
     const interrupts = buildInterruptReport(session);
+    const ccCoverage = buildCCCoverage(session);
+    const performance = buildPerformanceReport(session, resolver, interrupts, deaths, ccCoverage);
+    const defensiveAudit = buildDefensiveAudit(session, resolver, deaths);
 
     const allSessions = [session, ...this.allSessions].slice(0, 20);
     const luaContent = serializeToLua({
-      version: 1,
+      version: 3,
       generatedAt: Math.floor(Date.now() / 1000),
-      companionVersion: "0.1.0",
+      companionVersion: "0.3.0",
       sessions: allSessions.map((s, idx) => {
         const r = new GuidResolver();
         r.populate(s.combatants);
+        const d = idx === 0 ? deaths : buildDeathRecaps(s, r);
+        const int = idx === 0 ? interrupts : buildInterruptReport(s);
+        const cc = idx === 0 ? ccCoverage : buildCCCoverage(s);
         return {
           session: s,
-          deaths: idx === 0 ? deaths : buildDeathRecaps(s, r),
-          interrupts: idx === 0 ? interrupts : buildInterruptReport(s),
+          deaths: d,
+          interrupts: int,
+          ccCoverage: cc,
+          performance: idx === 0 ? performance : buildPerformanceReport(s, r, int, d, cc),
+          defensiveAudit: idx === 0 ? defensiveAudit : buildDefensiveAudit(s, r, d),
         };
       }),
     });

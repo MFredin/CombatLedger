@@ -108,6 +108,9 @@ function Frame:Init()
     -- Build tab buttons from registered tabs
     self:BuildTabButtons()
 
+    -- Build preset selector in filter bar
+    self:BuildPresetSelector(filterBar)
+
     -- Show companion-not-detected message if needed
     self:BuildEmptyState()
 
@@ -161,6 +164,65 @@ function Frame:BuildTabButtons()
             end)
 
             self.tabButtons[id] = { btn = btn, bg = bg, label = label }
+        end
+    end
+end
+
+-- ---------------------------------------------------------------------------
+-- Preset selector in filter bar (Task 2.5)
+-- ---------------------------------------------------------------------------
+
+function Frame:BuildPresetSelector(filterBar)
+    local presetLabel = filterBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    presetLabel:SetPoint("LEFT", filterBar, "LEFT", 8, 0)
+    presetLabel:SetTextColor(C.gold.r, C.gold.g, C.gold.b)
+    presetLabel:SetText("Preset:")
+
+    local x = 58
+    self.presetButtons = {}
+
+    local presets = CL.Config:GetPresets()
+    for _, preset in ipairs(presets) do
+        local btn = CreateFrame("Button", nil, filterBar)
+        btn:SetSize(110, 26)
+        btn:SetPoint("LEFT", filterBar, "LEFT", x, 0)
+        x = x + 114
+
+        local bg = btn:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints(btn)
+        bg:SetColorTexture(C.cardBg.r, C.cardBg.g, C.cardBg.b)
+
+        local lbl = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        lbl:SetAllPoints(btn)
+        lbl:SetText(preset.name)
+
+        local presetName = preset.name
+        btn:SetScript("OnClick", function()
+            CL.Config:ApplyPreset(presetName)
+            self:RefreshPresetHighlight()
+        end)
+        btn:SetScript("OnEnter", function()
+            bg:SetColorTexture(C.hover.r, C.hover.g, C.hover.b)
+        end)
+        btn:SetScript("OnLeave", function()
+            self:RefreshPresetHighlight()
+        end)
+
+        self.presetButtons[presetName] = { btn = btn, bg = bg, lbl = lbl }
+    end
+
+    self:RefreshPresetHighlight()
+end
+
+function Frame:RefreshPresetHighlight()
+    local active = CL.Config:GetActivePreset()
+    for name, pbtn in pairs(self.presetButtons or {}) do
+        if name == active then
+            pbtn.bg:SetColorTexture(C.borderVis.r, C.borderVis.g, C.borderVis.b)
+            pbtn.lbl:SetTextColor(C.gold.r, C.gold.g, C.gold.b)
+        else
+            pbtn.bg:SetColorTexture(C.cardBg.r, C.cardBg.g, C.cardBg.b)
+            pbtn.lbl:SetTextColor(0.75, 0.75, 0.75)
         end
     end
 end

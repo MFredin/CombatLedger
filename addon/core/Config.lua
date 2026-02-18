@@ -68,6 +68,49 @@ Config.builtinPresets = {
 }
 
 -- ---------------------------------------------------------------------------
+-- Preset management (Task 2.5)
+-- ---------------------------------------------------------------------------
+
+--- Returns merged list of built-in + custom presets.
+function Config:GetPresets()
+    local list = {}
+    for _, p in ipairs(self.builtinPresets) do
+        table.insert(list, p)
+    end
+    local custom = (CL.addon and CL.addon.db and CL.addon.db.profile.customPresets) or {}
+    for name, p in pairs(custom) do
+        table.insert(list, { name = name, filters = p.filters, activeTab = p.activeTab })
+    end
+    return list
+end
+
+--- Find a preset by name (builtin first, then custom).
+function Config:FindPreset(name)
+    for _, p in ipairs(self.builtinPresets) do
+        if p.name == name then return p end
+    end
+    local custom = (CL.addon and CL.addon.db and CL.addon.db.profile.customPresets) or {}
+    return custom[name]
+end
+
+--- Apply a preset by name: saves activePreset setting, switches tab.
+function Config:ApplyPreset(name)
+    local preset = self:FindPreset(name)
+    if not preset then return end
+    if CL.addon and CL.addon.db then
+        CL.addon.db.profile.activePreset = name
+    end
+    if preset.activeTab and CL.Frame then
+        CL.Frame:SwitchTab(preset.activeTab)
+    end
+end
+
+--- Return the currently active preset name.
+function Config:GetActivePreset()
+    return (CL.addon and CL.addon.db and CL.addon.db.profile.activePreset) or "Default"
+end
+
+-- ---------------------------------------------------------------------------
 -- WoW class colours
 -- ---------------------------------------------------------------------------
 
