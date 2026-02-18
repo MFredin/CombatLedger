@@ -130,17 +130,27 @@ Config.classColours = {
     WARRIOR      = { r = 0.78, g = 0.61, b = 0.43 },
 }
 
--- UI theme colours
+-- UI theme colours (matches CombatLedger mockup CSS variables exactly)
 Config.colours = {
-    bg         = { r = 0.039, g = 0.047, b = 0.063 }, -- #0a0c10
-    panelBg    = { r = 0.059, g = 0.071, b = 0.098 }, -- #0f1219
-    cardBg     = { r = 0.078, g = 0.094, b = 0.125 }, -- #141820
-    hover      = { r = 0.102, g = 0.125, b = 0.188 }, -- #1a2030
-    borderSub  = { r = 0.118, g = 0.145, b = 0.208 }, -- #1e2535
-    borderVis  = { r = 0.145, g = 0.176, b = 0.251 }, -- #252d40
-    gold       = { r = 0.910, g = 0.659, b = 0.125 }, -- #e8a820
-    red        = { r = 0.910, g = 0.251, b = 0.251 }, -- #e84040
-    blue       = { r = 0.251, g = 0.722, b = 0.910 }, -- #40b8e8
-    purple     = { r = 0.690, g = 0.251, b = 0.910 }, -- #b040e8
-    green      = { r = 0.251, g = 0.910, b = 0.478 }, -- #40e87a
+    -- Backgrounds
+    bg         = { r = 0.039, g = 0.047, b = 0.063 }, -- #0a0c10  --bg-base
+    panelBg    = { r = 0.059, g = 0.071, b = 0.098 }, -- #0f1219  --bg-panel
+    cardBg     = { r = 0.078, g = 0.094, b = 0.125 }, -- #141820  --bg-card
+    hover      = { r = 0.102, g = 0.125, b = 0.188 }, -- #1a2030  --bg-hover
+    -- Borders
+    borderSub  = { r = 0.118, g = 0.145, b = 0.208 }, -- #1e2535  --border
+    borderVis  = { r = 0.145, g = 0.176, b = 0.251 }, -- #252d40  --border-light
+    -- Text
+    textPrimary   = { r = 0.831, g = 0.863, b = 0.918 }, -- #d4dcea --text-primary
+    textSecondary = { r = 0.420, g = 0.478, b = 0.604 }, -- #6b7a9a --text-secondary
+    textMuted     = { r = 0.239, g = 0.290, b = 0.384 }, -- #3d4a62 --text-muted
+    -- Accent (gold)
+    gold       = { r = 0.910, g = 0.659, b = 0.125 }, -- #e8a820  --accent
+    goldDim    = { r = 0.690, g = 0.478, b = 0.063 }, -- #b07a10  --accent-dim
+    -- Semantic
+    red        = { r = 0.910, g = 0.251, b = 0.251 }, -- #e84040  --death
+    blue       = { r = 0.251, g = 0.722, b = 0.910 }, -- #40b8e8  --interrupt
+    purple     = { r = 0.690, g = 0.251, b = 0.910 }, -- #b040e8  --cc
+    green      = { r = 0.251, g = 0.910, b = 0.478 }, -- #40e87a  --heal
+    damage     = { r = 0.910, g = 0.376, b = 0.251 }, -- #e86040  --damage
 }
