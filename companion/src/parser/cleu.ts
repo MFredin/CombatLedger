@@ -227,10 +227,19 @@ export type ParsedEvent =
 
 /** Parse "MM/DD HH:MM:SS.mmm" into a Date (uses current year). */
 function parseTimestamp(raw: string): Date {
-  const [datePart, timePart] = raw.split(" ");
-  const [month, day] = datePart.split("/").map(Number);
-  const [time, ms] = timePart.split(".");
-  const [hh, mm, ss] = time.split(":").map(Number);
+  const splitDate = raw.split(" ");
+  const datePart = splitDate[0] ?? "";
+  const timePart = splitDate[1] ?? "";
+  const dateParts = datePart.split("/").map(Number);
+  const month = dateParts[0] ?? 1;
+  const day = dateParts[1] ?? 1;
+  const timeMs = timePart.split(".");
+  const time = timeMs[0] ?? "";
+  const ms = timeMs[1];
+  const timeParts = time.split(":").map(Number);
+  const hh = timeParts[0] ?? 0;
+  const mm = timeParts[1] ?? 0;
+  const ss = timeParts[2] ?? 0;
   const year = new Date().getFullYear();
   return new Date(year, month - 1, day, hh, mm, ss, Number(ms ?? 0));
 }
@@ -327,7 +336,7 @@ export function parseLine(line: string): Result<ParsedEvent, Error> {
       return { ok: false, error: new Error("Empty event line") };
     }
 
-    const subevent = parts[0];
+    const subevent = parts[0] ?? "";
     const params = parts.slice(1);
 
     // Handle non-CLEU lines (ENCOUNTER_START etc. don't have base unit fields)

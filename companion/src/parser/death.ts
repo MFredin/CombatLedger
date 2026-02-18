@@ -175,7 +175,7 @@ export function buildDeathRecaps(
     // Identify the fatal event: last damage event with overkill > 0.
     let fatalIdx = -1;
     for (let i = windowEvents.length - 1; i >= 0; i--) {
-      if (windowEvents[i].info.type === "damage" && windowEvents[i].info.overkill > 0) {
+      if (windowEvents[i]!.info.type === "damage" && windowEvents[i]!.info.overkill > 0) {
         fatalIdx = i;
         break;
       }
@@ -183,14 +183,14 @@ export function buildDeathRecaps(
     if (fatalIdx === -1) {
       // Fallback: last damage event
       for (let i = windowEvents.length - 1; i >= 0; i--) {
-        if (windowEvents[i].info.type === "damage") {
+        if (windowEvents[i]!.info.type === "damage") {
           fatalIdx = i;
           break;
         }
       }
     }
 
-    const fatalInfo = fatalIdx >= 0 ? windowEvents[fatalIdx].info : null;
+    const fatalInfo = fatalIdx >= 0 ? windowEvents[fatalIdx]!.info : null;
 
     // Calculate running HP (we don't have true max HP from COMBATANT_INFO stamina,
     // so we estimate from the last known HP before the death window via cumulative approach).
@@ -247,7 +247,7 @@ export function buildDeathRecaps(
         spellId: def.spellId,
         spellName: def.name,
         wasUsed: !!lastUsedAt,
-        usedAt: lastUsedAt,
+        ...(lastUsedAt !== undefined ? { usedAt: lastUsedAt } : {}),
         available,
       };
     });

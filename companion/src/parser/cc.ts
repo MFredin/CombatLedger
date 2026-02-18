@@ -202,7 +202,7 @@ function closeSegment(
     drMultiplier: open.drMultiplier,
     drApplicationNumber: open.drApplicationNumber,
     brokeEarly,
-    brokeReason,
+    ...(brokeReason !== undefined ? { brokeReason } : {}),
     wasImmune: open.drMultiplier === 0.0,
   };
 }
