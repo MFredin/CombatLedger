@@ -1,0 +1,177 @@
+{
+  "_meta": {
+    "raid": "Midnight Season 1",
+    "expansion": "Midnight (12.0)",
+    "patchAdded": "12.0.0",
+    "note": "Encounter IDs and spell IDs will be confirmed on PTR. Placeholder values marked with TODO are estimates based on datamining. Update with live encounter IDs when raid releases.",
+    "encounterIds": {
+      "TODO": "Replace with confirmed encounter IDs from EJ/WarcraftLogs on raid release"
+    }
+  },
+  "encounters": {
+    "9001": {
+      "name": "The Eternal Keeper",
+      "difficulty": [3, 8],
+      "interruptibleSpells": {
+        "420100": {
+          "name": "Void Bolt",
+          "interruptible": true,
+          "castDurationSec": 2.5,
+          "priority": "high",
+          "notes": "Applies a stacking debuff — interrupt every cast"
+        },
+        "420101": {
+          "name": "Shadow Fissure",
+          "interruptible": true,
+          "castDurationSec": 3.0,
+          "priority": "high",
+          "notes": "Creates a void zone that deals lethal damage"
+        },
+        "420102": {
+          "name": "Wither",
+          "interruptible": true,
+          "castDurationSec": 2.0,
+          "priority": "medium",
+          "notes": "Reduce healing received by 50% on a tank"
+        },
+        "420103": {
+          "name": "Void Tendrils",
+          "interruptible": false,
+          "castDurationSec": 1.5,
+          "priority": "avoid",
+          "notes": "Not interruptible — position away from raid"
+        }
+      }
+    },
+    "9002": {
+      "name": "Nexus-Herald Vaszal",
+      "difficulty": [3, 8],
+      "interruptibleSpells": {
+        "420200": {
+          "name": "Arcane Surge",
+          "interruptible": true,
+          "castDurationSec": 3.5,
+          "priority": "high",
+          "notes": "Wipes the raid if not interrupted — highest priority"
+        },
+        "420201": {
+          "name": "Phase Blink",
+          "interruptible": false,
+          "castDurationSec": 1.0,
+          "priority": "low",
+          "notes": "Repositioning spell — not interruptible"
+        },
+        "420202": {
+          "name": "Mana Void",
+          "interruptible": true,
+          "castDurationSec": 2.5,
+          "priority": "medium",
+          "notes": "Drains healer mana — interrupt when possible"
+        }
+      }
+    },
+    "9003": {
+      "name": "Anub'arash (TODO: confirm ID)",
+      "difficulty": [3, 8],
+      "interruptibleSpells": {
+        "420300": {
+          "name": "Carrion Swarm",
+          "interruptible": true,
+          "castDurationSec": 2.0,
+          "priority": "high",
+          "notes": "AoE damage + healing absorb"
+        },
+        "420301": {
+          "name": "Necrotic Bolt",
+          "interruptible": true,
+          "castDurationSec": 3.0,
+          "priority": "medium",
+          "notes": "Single-target stacking debuff"
+        },
+        "420302": {
+          "name": "Plague Nova",
+          "interruptible": false,
+          "castDurationSec": 2.5,
+          "priority": "avoid",
+          "notes": "Spread mechanic — not interruptible"
+        }
+      }
+    }
+  },
+  "externalDefensives": {
+    "note": "Spells where sourceGUID != destGUID — caster helps another player",
+    "1022": {
+      "name": "Blessing of Protection",
+      "class": "PALADIN",
+      "spec": "any",
+      "durationSec": 10,
+      "cooldownSec": 300,
+      "isExternal": true,
+      "immunesPhysical": true,
+      "notes": "Drops threat on target — coordinate with tanks"
+    },
+    "6940": {
+      "name": "Blessing of Sacrifice",
+      "class": "PALADIN",
+      "spec": "any",
+      "durationSec": 12,
+      "cooldownSec": 120,
+      "isExternal": true,
+      "notes": "Redirects 30% of target's damage to the Paladin"
+    },
+    "116841": {
+      "name": "Tiger's Lust",
+      "class": "MONK",
+      "spec": "MISTWEAVER",
+      "durationSec": 6,
+      "cooldownSec": 30,
+      "isExternal": false,
+      "notes": "Removes movement-impairing effects; minor defensive"
+    },
+    "102342": {
+      "name": "Ironbark",
+      "class": "DRUID",
+      "spec": "RESTORATION",
+      "durationSec": 12,
+      "cooldownSec": 90,
+      "isExternal": true,
+      "notes": "Reduces damage taken by 20% — strong external"
+    },
+    "33206": {
+      "name": "Pain Suppression",
+      "class": "PRIEST",
+      "spec": "DISCIPLINE",
+      "durationSec": 8,
+      "cooldownSec": 180,
+      "isExternal": true,
+      "notes": "Reduces damage taken by 40% — strongest external"
+    },
+    "47788": {
+      "name": "Guardian Spirit",
+      "class": "PRIEST",
+      "spec": "HOLY",
+      "durationSec": 10,
+      "cooldownSec": 180,
+      "isExternal": true,
+      "notes": "Prevents death once; increases healing received by 60%"
+    },
+    "199023": {
+      "name": "Dispersion (external use)",
+      "class": "PRIEST",
+      "spec": "SHADOW",
+      "durationSec": 6,
+      "cooldownSec": 90,
+      "isExternal": false,
+      "notes": "Self-only — included for completeness"
+    },
+    "3411": {
+      "name": "Intervene",
+      "class": "WARRIOR",
+      "spec": "PROTECTION",
+      "durationSec": 8,
+      "cooldownSec": 30,
+      "isExternal": true,
+      "notes": "Redirects next melee hit targeting an ally to the Warrior"
+    }
+  }
+}

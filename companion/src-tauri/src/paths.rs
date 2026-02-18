@@ -1,0 +1,118 @@
+use anyhow::{Context, Result};
+use std::path::{Path, PathBuf};
+
+/// Resolved WoW paths needed by the companion.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct WowPaths {
+    pub wow_root: PathBuf,
+    pub combat_log: PathBuf,
+    pub saved_variables: PathBuf,
+    pub account_name: String,
+}
+
+/// Attempt to auto-detect the WoW installation root.
+pub fn detect_wow_root() -> Option<PathBuf> {
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(p) = detect_wow_root_windows() {
+            return Some(p);
+        }
+        let fallback = PathBuf::from(r"C:\Program Files (x86)\World of Warcraft\_retail_");
+        if fallback.exists() {
+            return Some(fallback);
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let macos_path = PathBuf::from("/Applications/World of Warcraft/_retail_");
+        if macos_path.exists() {
+            return Some(macos_path);
+        }
+    }
+
+    None
+}
+
+#[cfg(target_os = "windows")]
+fn detect_wow_root_windows() -> Option<PathBuf> {
+    // Attempt registry lookup: HKLM\SOFTWARE\Blizzard Entertainment\World of Warcraft
+    // Using the winreg crate would be cleaner, but we keep deps minimal and shell out.
+    use std::process::Command;
+    let output = Command::new("reg")
+        .args([
+            "query",
+            r"HKEY_LOCAL_MACHINE\SOFTWARE\Blizzard Entertainment\World of Warcraft",
+            "/v",
+            "InstallPath",
+        ])
+        .output()
+        .ok()?;
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    for line in stdout.lines() {
+        if line.contains("InstallPath") {
+            let parts: Vec<&str> = line.splitn(3, "    ").collect();
+            if parts.len() == 3 {
+                let raw = parts[2].trim();
+                let path = PathBuf::from(raw).join("_retail_");
+                if path.exists() {
+                    return Some(path);
+                }
+            }
+        }
+    }
+    None
+}
+
+/// Discover the Battle.net account directory under WTF/Account/.
+/// Returns a list of candidate account names (filters out directories starting with '#').
+pub fn discover_account_names(wow_root: &Path) -> Result<Vec<String>> {
+    let account_dir = wow_root.join("WTF").join("Account");
+    let entries = std::fs::read_dir(&account_dir)
+        .with_context(|| format!("Cannot read WTF/Account directory: {}", account_dir.display()))?;
+
+    let mut names = Vec::new();
+    for entry in entries.flatten() {
+        if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+            if let Some(name) = entry.file_name().to_str() {
+                // Skip internal Blizzard directories
+                if !name.starts_with('#') {
+                    names.push(name.to_string());
+                }
+            }
+        }
+    }
+    Ok(names)
+}
+
+/// Build the full WowPaths structure given a wow root and selected account name.
+pub fn build_paths(wow_root: PathBuf, account_name: String) -> WowPaths {
+    let combat_log = wow_root.join("Logs").join("WoWCombatLog.txt");
+    let saved_variables = wow_root
+        .join("WTF")
+        .join("Account")
+        .join(&account_name)
+        .join("SavedVariables")
+        .join("CombatLedger.lua");
+    WowPaths {
+        wow_root,
+        combat_log,
+        saved_variables,
+        account_name,
+    }
+}
+
+/// Attempt a fully automated path resolution. Returns `Ok(paths)` if a single
+/// account directory is found, or an `Err` that signals the caller to prompt the user.
+pub fn auto_resolve() -> Result<WowPaths> {
+    let root = detect_wow_root().context("WoW installation not found")?;
+    let accounts = discover_account_names(&root)?;
+    match accounts.len() {
+        0 => anyhow::bail!("No Battle.net account directories found under WTF/Account"),
+        1 => Ok(build_paths(root, accounts.into_iter().next().unwrap())),
+        _ => anyhow::bail!(
+            "Multiple Battle.net accounts found — user must select one: {:?}",
+            accounts
+        ),
+    }
+}

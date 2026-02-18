@@ -1,0 +1,454 @@
+{
+  "spells": {
+    "6552": {
+      "name": "Pummel",
+      "class": "WARRIOR",
+      "type": "interrupt",
+      "interruptible": false,
+      "cooldownSec": 15
+    },
+    "2139": {
+      "name": "Counterspell",
+      "class": "MAGE",
+      "type": "interrupt",
+      "interruptible": false,
+      "cooldownSec": 24
+    },
+    "1766": {
+      "name": "Kick",
+      "class": "ROGUE",
+      "type": "interrupt",
+      "interruptible": false,
+      "cooldownSec": 15
+    },
+    "19647": {
+      "name": "Spell Lock",
+      "class": "WARLOCK",
+      "type": "interrupt",
+      "interruptible": false,
+      "cooldownSec": 24
+    },
+    "57994": {
+      "name": "Wind Shear",
+      "class": "SHAMAN",
+      "type": "interrupt",
+      "interruptible": false,
+      "cooldownSec": 12
+    },
+    "96231": {
+      "name": "Rebuke",
+      "class": "PALADIN",
+      "type": "interrupt",
+      "interruptible": false,
+      "cooldownSec": 15
+    },
+    "106839": {
+      "name": "Skull Bash",
+      "class": "DRUID",
+      "type": "interrupt",
+      "interruptible": false,
+      "cooldownSec": 15
+    },
+    "116705": {
+      "name": "Spear Hand Strike",
+      "class": "MONK",
+      "type": "interrupt",
+      "interruptible": false,
+      "cooldownSec": 15
+    },
+    "147362": {
+      "name": "Counter Shot",
+      "class": "HUNTER",
+      "type": "interrupt",
+      "interruptible": false,
+      "cooldownSec": 24
+    },
+    "183752": {
+      "name": "Consume Magic",
+      "class": "DEMONHUNTER",
+      "type": "interrupt",
+      "interruptible": false,
+      "cooldownSec": 10
+    },
+    "351338": {
+      "name": "Quell",
+      "class": "EVOKER",
+      "type": "interrupt",
+      "interruptible": false,
+      "cooldownSec": 20
+    },
+    "47528": {
+      "name": "Mind Freeze",
+      "class": "DEATHKNIGHT",
+      "type": "interrupt",
+      "interruptible": false,
+      "cooldownSec": 15
+    },
+    "51514": {
+      "name": "Hex",
+      "class": "SHAMAN",
+      "type": "cc",
+      "ccCategory": "incapacitate",
+      "durationSec": 8,
+      "breakOnDamage": true,
+      "interruptible": false
+    },
+    "118": {
+      "name": "Polymorph",
+      "class": "MAGE",
+      "type": "cc",
+      "ccCategory": "incapacitate",
+      "durationSec": 60,
+      "breakOnDamage": true,
+      "interruptible": false
+    },
+    "2094": {
+      "name": "Blind",
+      "class": "ROGUE",
+      "type": "cc",
+      "ccCategory": "incapacitate",
+      "durationSec": 60,
+      "breakOnDamage": true,
+      "interruptible": false
+    },
+    "6770": {
+      "name": "Sap",
+      "class": "ROGUE",
+      "type": "cc",
+      "ccCategory": "incapacitate",
+      "durationSec": 60,
+      "breakOnDamage": false,
+      "interruptible": false
+    },
+    "408": {
+      "name": "Kidney Shot",
+      "class": "ROGUE",
+      "type": "cc",
+      "ccCategory": "stun",
+      "durationSec": 6,
+      "breakOnDamage": false,
+      "interruptible": false
+    },
+    "853": {
+      "name": "Hammer of Justice",
+      "class": "PALADIN",
+      "type": "cc",
+      "ccCategory": "stun",
+      "durationSec": 6,
+      "breakOnDamage": false,
+      "interruptible": false
+    },
+    "1833": {
+      "name": "Cheap Shot",
+      "class": "ROGUE",
+      "type": "cc",
+      "ccCategory": "stun",
+      "durationSec": 4,
+      "breakOnDamage": false,
+      "interruptible": false
+    },
+    "8122": {
+      "name": "Psychic Scream",
+      "class": "PRIEST",
+      "type": "cc",
+      "ccCategory": "disorient",
+      "durationSec": 8,
+      "breakOnDamage": true,
+      "interruptible": false
+    },
+    "9484": {
+      "name": "Shackle Undead",
+      "class": "PRIEST",
+      "type": "cc",
+      "ccCategory": "disorient",
+      "durationSec": 50,
+      "breakOnDamage": true,
+      "interruptible": false
+    },
+    "15487": {
+      "name": "Silence",
+      "class": "PRIEST",
+      "type": "cc",
+      "ccCategory": "silence",
+      "durationSec": 4,
+      "breakOnDamage": false,
+      "interruptible": false
+    },
+    "202933": {
+      "name": "Sigil of Silence",
+      "class": "DEMONHUNTER",
+      "type": "cc",
+      "ccCategory": "silence",
+      "durationSec": 6,
+      "breakOnDamage": false,
+      "interruptible": false
+    }
+  },
+  "enemySpells": {
+    "dungeons": {
+      "darkflame-cleft": {
+        "453555": {
+          "name": "Void Surge",
+          "casterId": 12345,
+          "casterName": "Darkwatcher",
+          "interruptible": true,
+          "castDurationSec": 2.5,
+          "priority": "high",
+          "notes": "Heavy damage to random target if not interrupted"
+        },
+        "453601": {
+          "name": "Shadowquake",
+          "casterId": 12345,
+          "casterName": "Darkwatcher",
+          "interruptible": false,
+          "castDurationSec": 2.0,
+          "priority": "avoid",
+          "notes": "AoE ground slam — move out"
+        },
+        "453620": {
+          "name": "Dark Bolt",
+          "casterId": 12346,
+          "casterName": "Umbral Tender",
+          "interruptible": true,
+          "castDurationSec": 2.0,
+          "priority": "high",
+          "notes": "Single target nuke, always interrupt"
+        },
+        "453640": {
+          "name": "Extinguish Light",
+          "casterId": 12347,
+          "casterName": "Blazikon",
+          "interruptible": true,
+          "castDurationSec": 3.0,
+          "priority": "high",
+          "notes": "Dispels candles; interrupt or AoE cc"
+        }
+      },
+      "priory-of-the-sacred-flame": {
+        "427450": {
+          "name": "Holy Smite",
+          "casterId": 22000,
+          "casterName": "Fanatical Headsman",
+          "interruptible": true,
+          "castDurationSec": 2.0,
+          "priority": "medium",
+          "notes": "Single target holy damage"
+        },
+        "427460": {
+          "name": "Blinding Light",
+          "casterId": 22001,
+          "casterName": "Veteran Warrior",
+          "interruptible": true,
+          "castDurationSec": 2.5,
+          "priority": "high",
+          "notes": "Blinds entire party — must interrupt"
+        }
+      }
+    }
+  },
+  "defensives": {
+    "PALADIN": {
+      "RETRIBUTION": [
+        { "spellId": 642,    "name": "Divine Shield",          "durationSec": 8,  "cooldownSec": 300 },
+        { "spellId": 184662, "name": "Shield of Vengeance",    "durationSec": 15, "cooldownSec": 120 },
+        { "spellId": 1022,   "name": "Blessing of Protection", "durationSec": 10, "cooldownSec": 300, "isExternal": true },
+        { "spellId": 498,    "name": "Divine Protection",      "durationSec": 8,  "cooldownSec": 60  }
+      ],
+      "HOLY": [
+        { "spellId": 642,   "name": "Divine Shield",   "durationSec": 8, "cooldownSec": 300 },
+        { "spellId": 31821, "name": "Aura Mastery",    "durationSec": 8, "cooldownSec": 180 }
+      ],
+      "PROTECTION": [
+        { "spellId": 642,   "name": "Divine Shield",       "durationSec": 8,  "cooldownSec": 300 },
+        { "spellId": 86659, "name": "Guardian of Ancient Kings", "durationSec": 12, "cooldownSec": 300 },
+        { "spellId": 498,   "name": "Divine Protection",   "durationSec": 8,  "cooldownSec": 60  }
+      ]
+    },
+    "ROGUE": {
+      "ASSASSINATION": [
+        { "spellId": 31224, "name": "Cloak of Shadows", "durationSec": 5,  "cooldownSec": 120 },
+        { "spellId": 5277,  "name": "Evasion",          "durationSec": 10, "cooldownSec": 120 },
+        { "spellId": 1966,  "name": "Feint",            "durationSec": 6,  "cooldownSec": 15  }
+      ],
+      "OUTLAW": [
+        { "spellId": 31224, "name": "Cloak of Shadows", "durationSec": 5,  "cooldownSec": 120 },
+        { "spellId": 5277,  "name": "Evasion",          "durationSec": 10, "cooldownSec": 120 },
+        { "spellId": 1966,  "name": "Feint",            "durationSec": 6,  "cooldownSec": 15  }
+      ],
+      "SUBTLETY": [
+        { "spellId": 31224, "name": "Cloak of Shadows", "durationSec": 5,  "cooldownSec": 120 },
+        { "spellId": 5277,  "name": "Evasion",          "durationSec": 10, "cooldownSec": 120 },
+        { "spellId": 1966,  "name": "Feint",            "durationSec": 6,  "cooldownSec": 15  }
+      ]
+    },
+    "SHAMAN": {
+      "ELEMENTAL": [
+        { "spellId": 108271, "name": "Astral Shift",    "durationSec": 8, "cooldownSec": 90   },
+        { "spellId": 20608,  "name": "Reincarnation",  "durationSec": 0, "cooldownSec": 1800, "notes": "Passive — listed for awareness" }
+      ],
+      "ENHANCEMENT": [
+        { "spellId": 108271, "name": "Astral Shift",   "durationSec": 8, "cooldownSec": 90 }
+      ],
+      "RESTORATION": [
+        { "spellId": 108271, "name": "Astral Shift",   "durationSec": 8, "cooldownSec": 90 }
+      ]
+    },
+    "DEMONHUNTER": {
+      "VENGEANCE": [
+        { "spellId": 198589, "name": "Blur",           "durationSec": 10, "cooldownSec": 60  },
+        { "spellId": 187827, "name": "Metamorphosis",  "durationSec": 15, "cooldownSec": 180 },
+        { "spellId": 204021, "name": "Fiery Brand",    "durationSec": 8,  "cooldownSec": 60  }
+      ],
+      "HAVOC": [
+        { "spellId": 198589, "name": "Blur",           "durationSec": 10, "cooldownSec": 60  },
+        { "spellId": 196555, "name": "Netherwalk",     "durationSec": 6,  "cooldownSec": 180 }
+      ]
+    },
+    "PRIEST": {
+      "HOLY": [
+        { "spellId": 47585, "name": "Dispersion",       "durationSec": 6, "cooldownSec": 120 },
+        { "spellId": 33206, "name": "Pain Suppression", "durationSec": 8, "cooldownSec": 180, "isExternal": true }
+      ],
+      "DISCIPLINE": [
+        { "spellId": 47585, "name": "Dispersion",       "durationSec": 6, "cooldownSec": 120 },
+        { "spellId": 33206, "name": "Pain Suppression", "durationSec": 8, "cooldownSec": 180, "isExternal": true }
+      ],
+      "SHADOW": [
+        { "spellId": 47585, "name": "Dispersion", "durationSec": 6, "cooldownSec": 120 }
+      ]
+    },
+    "WARRIOR": {
+      "PROTECTION": [
+        { "spellId": 871,    "name": "Shield Wall",     "durationSec": 8, "cooldownSec": 240 },
+        { "spellId": 12975,  "name": "Last Stand",      "durationSec": 15,"cooldownSec": 180 },
+        { "spellId": 23920,  "name": "Spell Reflection","durationSec": 5, "cooldownSec": 25  }
+      ],
+      "ARMS": [
+        { "spellId": 118038, "name": "Die by the Sword","durationSec": 8, "cooldownSec": 120 }
+      ],
+      "FURY": [
+        { "spellId": 184364, "name": "Enraged Regeneration","durationSec": 8,"cooldownSec": 120 }
+      ]
+    },
+    "DRUID": {
+      "GUARDIAN": [
+        { "spellId": 22812, "name": "Barkskin",        "durationSec": 12, "cooldownSec": 60 },
+        { "spellId": 61336, "name": "Survival Instincts","durationSec": 6,"cooldownSec": 180 }
+      ],
+      "RESTORATION": [
+        { "spellId": 22812, "name": "Barkskin",        "durationSec": 12, "cooldownSec": 60 }
+      ],
+      "BALANCE": [
+        { "spellId": 22812, "name": "Barkskin",        "durationSec": 12, "cooldownSec": 60 }
+      ],
+      "FERAL": [
+        { "spellId": 22812, "name": "Barkskin",        "durationSec": 12, "cooldownSec": 60 },
+        { "spellId": 61336, "name": "Survival Instincts","durationSec": 6,"cooldownSec": 180 }
+      ]
+    },
+    "MAGE": {
+      "ARCANE": [
+        { "spellId": 45438, "name": "Ice Block",        "durationSec": 10, "cooldownSec": 240 },
+        { "spellId": 414658,"name": "Ice Cold",         "durationSec": 6,  "cooldownSec": 240 }
+      ],
+      "FIRE": [
+        { "spellId": 45438, "name": "Ice Block",        "durationSec": 10, "cooldownSec": 240 }
+      ],
+      "FROST": [
+        { "spellId": 45438, "name": "Ice Block",        "durationSec": 10, "cooldownSec": 240 }
+      ]
+    },
+    "DEATHKNIGHT": {
+      "BLOOD": [
+        { "spellId": 49028,  "name": "Dancing Rune Weapon", "durationSec": 8,  "cooldownSec": 120 },
+        { "spellId": 55233,  "name": "Vampiric Blood",      "durationSec": 10, "cooldownSec": 180 }
+      ],
+      "FROST": [
+        { "spellId": 48707,  "name": "Anti-Magic Shell", "durationSec": 5,  "cooldownSec": 60 },
+        { "spellId": 48792,  "name": "Icebound Fortitude","durationSec": 8, "cooldownSec": 180 }
+      ],
+      "UNHOLY": [
+        { "spellId": 48707,  "name": "Anti-Magic Shell",   "durationSec": 5, "cooldownSec": 60 },
+        { "spellId": 48792,  "name": "Icebound Fortitude", "durationSec": 8, "cooldownSec": 180 }
+      ]
+    },
+    "HUNTER": {
+      "BEAST_MASTERY": [
+        { "spellId": 186265, "name": "Aspect of the Turtle", "durationSec": 8, "cooldownSec": 180 }
+      ],
+      "MARKSMANSHIP": [
+        { "spellId": 186265, "name": "Aspect of the Turtle", "durationSec": 8, "cooldownSec": 180 }
+      ],
+      "SURVIVAL": [
+        { "spellId": 186265, "name": "Aspect of the Turtle", "durationSec": 8, "cooldownSec": 180 }
+      ]
+    },
+    "WARLOCK": {
+      "AFFLICTION": [
+        { "spellId": 104773, "name": "Unending Resolve", "durationSec": 8, "cooldownSec": 180 }
+      ],
+      "DEMONOLOGY": [
+        { "spellId": 104773, "name": "Unending Resolve", "durationSec": 8, "cooldownSec": 180 }
+      ],
+      "DESTRUCTION": [
+        { "spellId": 104773, "name": "Unending Resolve", "durationSec": 8, "cooldownSec": 180 }
+      ]
+    },
+    "MONK": {
+      "BREWMASTER": [
+        { "spellId": 122278, "name": "Dampen Harm",  "durationSec": 10, "cooldownSec": 120 },
+        { "spellId": 115203, "name": "Fortifying Brew","durationSec": 15,"cooldownSec": 420 }
+      ],
+      "WINDWALKER": [
+        { "spellId": 122278, "name": "Dampen Harm",  "durationSec": 10, "cooldownSec": 120 },
+        { "spellId": 116849, "name": "Life Cocoon",  "durationSec": 12, "cooldownSec": 120, "isExternal": true }
+      ],
+      "MISTWEAVER": [
+        { "spellId": 116849, "name": "Life Cocoon",  "durationSec": 12, "cooldownSec": 120, "isExternal": true }
+      ]
+    },
+    "EVOKER": {
+      "DEVASTATION": [
+        { "spellId": 363916, "name": "Obsidian Scales","durationSec": 12, "cooldownSec": 90 }
+      ],
+      "PRESERVATION": [
+        { "spellId": 363916, "name": "Obsidian Scales","durationSec": 12, "cooldownSec": 90 }
+      ],
+      "AUGMENTATION": [
+        { "spellId": 363916, "name": "Obsidian Scales","durationSec": 12, "cooldownSec": 90 }
+      ]
+    }
+  },
+  "drCategories": {
+    "stun": {
+      "resetTimerSec": 18,
+      "pvpImmunityAfter": 2,
+      "pveImmunityAfter": 3,
+      "spells": [408, 853, 1833, 179057, 118905]
+    },
+    "incapacitate": {
+      "resetTimerSec": 18,
+      "pvpImmunityAfter": 2,
+      "pveImmunityAfter": 3,
+      "spells": [51514, 118, 2094, 6770, 20066, 710]
+    },
+    "disorient": {
+      "resetTimerSec": 18,
+      "pvpImmunityAfter": 2,
+      "pveImmunityAfter": 3,
+      "spells": [8122, 9484, 31661, 5246]
+    },
+    "silence": {
+      "resetTimerSec": 18,
+      "pvpImmunityAfter": 2,
+      "pveImmunityAfter": 3,
+      "spells": [15487, 202933, 78675]
+    },
+    "root": {
+      "resetTimerSec": 18,
+      "pvpImmunityAfter": 2,
+      "pveImmunityAfter": 3,
+      "spells": [339, 122, 33395, 64695]
+    }
+  }
+}

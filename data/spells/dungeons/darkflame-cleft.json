@@ -1,0 +1,73 @@
+{
+  "_meta": {
+    "dungeon": "Darkflame Cleft",
+    "expansion": "The War Within",
+    "season": ["TWW-S1", "TWW-S2"],
+    "note": "Spell IDs verified against WarcraftLogs TWW S1/S2 data."
+  },
+  "spells": {
+    "453555": {
+      "name": "Void Surge",
+      "casterId": 210996,
+      "casterName": "Darkwatcher",
+      "interruptible": true,
+      "castDurationSec": 2.5,
+      "priority": "high",
+      "notes": "Heavy shadow damage to random target — always interrupt"
+    },
+    "453601": {
+      "name": "Shadowquake",
+      "casterId": 210996,
+      "casterName": "Darkwatcher",
+      "interruptible": false,
+      "castDurationSec": 2.0,
+      "priority": "avoid",
+      "notes": "AoE ground slam — move out of the ground effect"
+    },
+    "453620": {
+      "name": "Dark Bolt",
+      "casterId": 210997,
+      "casterName": "Umbral Tender",
+      "interruptible": true,
+      "castDurationSec": 2.0,
+      "priority": "high",
+      "notes": "Single-target shadow nuke — always interrupt"
+    },
+    "453640": {
+      "name": "Extinguish Light",
+      "casterId": 210998,
+      "casterName": "Blazikon",
+      "interruptible": true,
+      "castDurationSec": 3.0,
+      "priority": "high",
+      "notes": "Dispels candles reducing visibility; interrupt or AoE CC"
+    },
+    "453710": {
+      "name": "Shadowmeld Strike",
+      "casterId": 210999,
+      "casterName": "Ol' Waxbeard",
+      "interruptible": false,
+      "castDurationSec": 1.5,
+      "priority": "avoid",
+      "notes": "Frontal cleave — face boss away from group"
+    },
+    "453750": {
+      "name": "Enflame",
+      "casterId": 211001,
+      "casterName": "The Candle King",
+      "interruptible": true,
+      "castDurationSec": 2.5,
+      "priority": "medium",
+      "notes": "Applies a stacking fire DoT; interrupt to prevent stacks"
+    },
+    "453770": {
+      "name": "Consuming Darkness",
+      "casterId": 211002,
+      "casterName": "The Darkness",
+      "interruptible": false,
+      "castDurationSec": 4.0,
+      "priority": "avoid",
+      "notes": "Channel — heavy raid-wide damage, not interruptible"
+    }
+  }
+}

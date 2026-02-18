@@ -1,0 +1,73 @@
+{
+  "_meta": {
+    "dungeon": "Priory of the Sacred Flame",
+    "expansion": "The War Within",
+    "season": ["TWW-S2"],
+    "note": "Spell IDs verified against WarcraftLogs TWW S2 data."
+  },
+  "spells": {
+    "427450": {
+      "name": "Holy Smite",
+      "casterId": 222000,
+      "casterName": "Fanatical Headsman",
+      "interruptible": true,
+      "castDurationSec": 2.0,
+      "priority": "medium",
+      "notes": "Single-target holy damage"
+    },
+    "427460": {
+      "name": "Blinding Light",
+      "casterId": 222001,
+      "casterName": "Veteran Warrior",
+      "interruptible": true,
+      "castDurationSec": 2.5,
+      "priority": "high",
+      "notes": "Blinds entire party — must interrupt"
+    },
+    "427490": {
+      "name": "Sacred Flame",
+      "casterId": 222002,
+      "casterName": "Priest of the Flame",
+      "interruptible": true,
+      "castDurationSec": 2.5,
+      "priority": "high",
+      "notes": "Applies a strong heal to another enemy — interrupt to prevent healing"
+    },
+    "427510": {
+      "name": "Consecration",
+      "casterId": 222003,
+      "casterName": "Captain Dailcry",
+      "interruptible": false,
+      "castDurationSec": 2.0,
+      "priority": "avoid",
+      "notes": "Marks area with holy ground — don't stand in it"
+    },
+    "427540": {
+      "name": "Galvanize",
+      "casterId": 222004,
+      "casterName": "Baron Braunpyke",
+      "interruptible": true,
+      "castDurationSec": 3.0,
+      "priority": "high",
+      "notes": "Buffs a nearby enemy with Haste — interrupt to prevent the empowerment"
+    },
+    "427580": {
+      "name": "Wrath of the Sacred Flame",
+      "casterId": 222005,
+      "casterName": "High Inquisitor Whitemane",
+      "interruptible": true,
+      "castDurationSec": 2.5,
+      "priority": "high",
+      "notes": "AoE holy damage to entire group — top-priority interrupt"
+    },
+    "427600": {
+      "name": "Inquisitor's Judgment",
+      "casterId": 222005,
+      "casterName": "High Inquisitor Whitemane",
+      "interruptible": false,
+      "castDurationSec": 3.5,
+      "priority": "avoid",
+      "notes": "Targeted stun — dodge the targeting indicator"
+    }
+  }
+}

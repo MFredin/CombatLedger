@@ -1,0 +1,129 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Build and publish the companion app on all three platforms in parallel
+  # ---------------------------------------------------------------------------
+  build-companion:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            args: "--target x86_64-pc-windows-msvc"
+          - platform: macos-latest
+            args: "--target aarch64-apple-darwin --target x86_64-apple-darwin"
+          - platform: ubuntu-22.04
+            args: ""
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          # Universal macOS binary targets
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./companion/src-tauri -> target"
+
+      - name: Install Linux system dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            pkg-config
+
+      - name: Install frontend dependencies
+        working-directory: companion
+        run: npm install
+
+      - name: Build frontend
+        working-directory: companion
+        run: npm run build
+
+      - name: Build and publish Tauri release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: companion
+          tagName: ${{ github.ref_name }}
+          releaseName: "CombatLedger ${{ github.ref_name }}"
+          releaseBody: |
+            ## CombatLedger ${{ github.ref_name }}
+
+            ### Installation
+
+            #### Windows
+            Download `CombatLedger_<version>_x64-setup.exe` and run it.
+            The companion will start automatically with Windows and sit in the system tray.
+
+            #### macOS
+            Download `CombatLedger_<version>_universal.dmg`, open it, and drag CombatLedger to Applications.
+
+            #### In-Game Addon
+            Install the `CombatLedger-<version>.zip` addon via CurseForge or manually place the
+            `CombatLedger/` folder in `World of Warcraft/_retail_/Interface/AddOns/`.
+
+            ### Changelog
+            See [CHANGELOG.md](https://github.com/MFredin/CombatLedger/blob/main/CHANGELOG.md) for details.
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
+
+  # ---------------------------------------------------------------------------
+  # Package the Lua addon as a ZIP for CurseForge / manual install
+  # ---------------------------------------------------------------------------
+  package-addon:
+    needs: build-companion
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Create addon ZIP
+        run: |
+          mkdir -p dist/CombatLedger
+          cp -r addon/* dist/CombatLedger/
+          # Remove dev-only files
+          find dist/CombatLedger -name "*.sh" -delete
+          find dist/CombatLedger -name ".DS_Store" -delete
+          cd dist
+          zip -r "CombatLedger-${{ steps.version.outputs.VERSION }}.zip" CombatLedger/
+
+      - name: Upload addon ZIP to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "dist/CombatLedger-${{ steps.version.outputs.VERSION }}.zip"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
