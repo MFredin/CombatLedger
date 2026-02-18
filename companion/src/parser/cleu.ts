@@ -290,15 +290,15 @@ function parseBase(
 ): Omit<BaseEvent, "subevent"> {
   return {
     timestamp,
-    hideCaster: bool(params[0]),
-    sourceGUID: str(params[1]),
-    sourceName: str(params[2]),
-    sourceFlags: num(params[3]),
-    sourceRaidFlags: num(params[4]),
-    destGUID: str(params[5]),
-    destName: str(params[6]),
-    destFlags: num(params[7]),
-    destRaidFlags: num(params[8]),
+    hideCaster: false,          // field removed from modern WoW log format
+    sourceGUID: str(params[0]),
+    sourceName: str(params[1]),
+    sourceFlags: num(params[2]),
+    sourceRaidFlags: num(params[3]),
+    destGUID: str(params[4]),
+    destName: str(params[5]),
+    destFlags: num(params[6]),
+    destRaidFlags: num(params[7]),
   };
 }
 
@@ -385,10 +385,10 @@ export function parseLine(line: string): Result<ParsedEvent, Error> {
       };
     }
 
-    // All remaining events share the 9-field base (hideCaster + 4 src + 4 dst).
+    // All remaining events share the 8-field base (4 src + 4 dst fields).
     const base = parseBase(timestamp, subevent, params);
-    // Event-specific params start at index 9.
-    const ep = params.slice(9);
+    // Event-specific params start at index 8.
+    const ep = params.slice(8);
 
     switch (subevent) {
       case "SPELL_DAMAGE":
