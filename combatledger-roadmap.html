@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CombatLedger — Product Roadmap</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+
+  :root {
+    --bg: #0a0c10;
+    --panel: #0f1219;
+    --card: #141820;
+    --border: #1e2535;
+    --border-light: #252d40;
+    --accent: #e8a820;
+    --accent-dim: rgba(232,168,32,0.15);
+    --text: #d4dcea;
+    --sub: #6b7a9a;
+    --muted: #3d4a62;
+    --green: #40e87a;
+    --red: #e84040;
+    --blue: #40b8e8;
+    --purple: #b040e8;
+
+    --p1: #3a8fff; /* Phase 1 */
+    --p2: #e8a820; /* Phase 2 */
+    --p3: #b040e8; /* Phase 3 */
+
+    --low: #40e87a;
+    --med: #e8a820;
+    --high: #e84040;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 40px 24px 80px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .doc-header {
+    margin-bottom: 48px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .doc-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .doc-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 42px;
+    letter-spacing: 2px;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .doc-title span { color: var(--accent); }
+
+  .doc-sub {
+    font-size: 15px;
+    color: var(--sub);
+    font-weight: 300;
+    max-width: 620px;
+    line-height: 1.6;
+    margin-top: 12px;
+  }
+
+  .doc-meta {
+    display: flex;
+    gap: 24px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .meta-item span { color: var(--sub); }
+
+  /* Section */
+  .section {
+    margin-bottom: 40px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    width: 24px;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: var(--sub);
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Architecture block */
+  .arch-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .arch-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 16px 18px;
+  }
+
+  .arch-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .arch-badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    padding: 2px 6px;
+    border: 1px solid;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+
+  .arch-badge.lua { color: #e8c820; border-color: rgba(232,200,32,0.3); background: rgba(232,200,32,0.07); }
+  .arch-badge.ts { color: #3a8fff; border-color: rgba(58,143,255,0.3); background: rgba(58,143,255,0.07); }
+  .arch-badge.rust { color: #e87040; border-color: rgba(232,112,64,0.3); background: rgba(232,112,64,0.07); }
+  .arch-badge.both { color: var(--sub); border-color: var(--border-light); background: rgba(255,255,255,0.03); }
+
+  .arch-desc {
+    font-size: 12px;
+    color: var(--sub);
+    line-height: 1.65;
+  }
+
+  /* Phase cards */
+  .phase-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: 3px solid;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+
+  .phase-card.p1 { border-top-color: var(--p1); }
+  .phase-card.p2 { border-top-color: var(--p2); }
+  .phase-card.p3 { border-top-color: var(--p3); }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .phase-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .phase-label.p1 { color: var(--p1); }
+  .phase-label.p2 { color: var(--p2); }
+  .phase-label.p3 { color: var(--p3); }
+
+  .phase-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-left: 8px;
+  }
+
+  .phase-timeline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .phase-body {
+    padding: 16px 18px;
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    gap: 20px;
+  }
+
+  .feature-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .feature-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .feature-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    padding: 2px 6px;
+    border: 1px solid var(--border-light);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    min-width: 40px;
+    text-align: center;
+  }
+
+  .feature-tag.core { color: var(--green); border-color: rgba(64,232,122,0.25); background: rgba(64,232,122,0.06); }
+  .feature-tag.ux { color: var(--blue); border-color: rgba(64,184,232,0.25); background: rgba(64,184,232,0.06); }
+  .feature-tag.data { color: var(--accent); border-color: rgba(232,168,32,0.25); background: rgba(232,168,32,0.06); }
+  .feature-tag.arch { color: var(--purple); border-color: rgba(176,64,232,0.25); background: rgba(176,64,232,0.06); }
+
+  .feature-content {}
+
+  .feature-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  .feature-desc {
+    font-size: 11px;
+    color: var(--sub);
+    margin-top: 2px;
+    line-height: 1.5;
+  }
+
+  /* Phase sidebar */
+  .phase-sidebar {
+    border-left: 1px solid var(--border);
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .sidebar-block {}
+
+  .sidebar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .sidebar-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  .complexity-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 1px;
+    overflow: hidden;
+    margin-top: 5px;
+  }
+
+  .complexity-fill {
+    height: 100%;
+    border-radius: 1px;
+  }
+
+  .risk-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--sub);
+    line-height: 1.4;
+    margin-bottom: 4px;
+  }
+
+  .risk-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+
+  .risk-dot.low { background: var(--low); }
+  .risk-dot.med { background: var(--med); }
+  .risk-dot.high { background: var(--high); }
+
+  /* Complexity table */
+  .complexity-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .complexity-table th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+    background: var(--bg);
+  }
+
+  .complexity-table td {
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--sub);
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .complexity-table tr:last-child td { border-bottom: none; }
+  .complexity-table tr:hover td { background: rgba(255,255,255,0.01); }
+
+  .complexity-table td:first-child {
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    min-width: 160px;
+  }
+
+  .complexity-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border: 1px solid;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .complexity-badge.low { color: var(--low); border-color: rgba(64,232,122,0.3); background: rgba(64,232,122,0.06); }
+  .complexity-badge.med { color: var(--med); border-color: rgba(232,168,32,0.3); background: rgba(232,168,32,0.06); }
+  .complexity-badge.high { color: var(--high); border-color: rgba(232,64,64,0.3); background: rgba(232,64,64,0.06); }
+  .complexity-badge.very-high { color: #ff6060; border-color: rgba(255,96,96,0.3); background: rgba(255,96,96,0.08); }
+
+  /* Timeline visual */
+  .timeline-visual {
+    position: relative;
+    padding-left: 24px;
+  }
+
+  .timeline-visual::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: var(--border-light);
+  }
+
+  .tl-item {
+    position: relative;
+    margin-bottom: 24px;
+  }
+
+  .tl-dot {
+    position: absolute;
+    left: -21px;
+    top: 5px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 2px solid;
+  }
+
+  .tl-dot.p1 { border-color: var(--p1); background: rgba(58,143,255,0.2); }
+  .tl-dot.p2 { border-color: var(--p2); background: rgba(232,168,32,0.2); }
+  .tl-dot.p3 { border-color: var(--p3); background: rgba(176,64,232,0.2); }
+
+  .tl-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+
+  .tl-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .tl-desc {
+    font-size: 12px;
+    color: var(--sub);
+    line-height: 1.5;
+  }
+
+  /* Callout */
+  .callout {
+    padding: 14px 18px;
+    background: rgba(232,168,32,0.06);
+    border: 1px solid rgba(232,168,32,0.2);
+    border-left: 3px solid var(--accent);
+    font-size: 13px;
+    color: var(--sub);
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  .callout strong { color: var(--text); }
+
+  .callout-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  /* Tech stack */
+  .stack-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+
+  .stack-item {
+    background: var(--card);
+    border: 1px solid var(--border-light);
+    padding: 8px 14px;
+  }
+
+  .stack-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .stack-role {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 1px;
+  }
+
+  @media (max-width: 680px) {
+    .arch-grid, .phase-body { grid-template-columns: 1fr; }
+    .phase-sidebar { border-left: none; border-top: 1px solid var(--border); padding-left: 0; padding-top: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="doc-header">
+  <div class="doc-eyebrow">Product Roadmap · Confidential</div>
+  <div class="doc-title">Combat<span>Ledger</span></div>
+  <div class="doc-sub">A post-combat analysis engine for World of Warcraft Midnight (12.0+) — bringing full-fidelity log data back into the game client via a lightweight companion architecture.</div>
+  <div class="doc-meta">
+    <div class="meta-item">Version <span>0.1 Draft</span></div>
+    <div class="meta-item">Target <span>WoW Midnight 12.0.1+</span></div>
+    <div class="meta-item">Distribution <span>CurseForge · GitHub</span></div>
+    <div class="meta-item">License <span>MIT (Addon) · Proprietary (Companion)</span></div>
+  </div>
+</div>
+
+
+<!-- ================================================ -->
+<!-- 1. ARCHITECTURE OVERVIEW -->
+<!-- ================================================ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <span class="section-title">Architecture Overview</span>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">Core Design Principle</div>
+    The in-game addon is a <strong>visualization layer only</strong>. All parsing, enrichment, and computation happens in the companion app outside the Lua sandbox. This keeps the addon thin, fast, and API-compliant — the companion does the heavy lifting. Communication happens via SavedVariables written to the WTF directory, with a <strong>/reload</strong> or automatic trigger completing the sync loop.
+  </div>
+
+  <div class="arch-grid">
+    <div class="arch-card">
+      <div class="arch-title">Companion App</div>
+      <div class="arch-badge ts">TypeScript / Tauri</div>
+      <div class="arch-desc">
+        Lightweight background process. Watches <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:11px;">WoWCombatLog.txt</code> using a native file watcher. Parses every CLEU event in real time, segments by encounter/pull, enriches events with context (overkill flags, DR chains, spell metadata), then serializes structured data into the addon's SavedVariables file. Minimal CPU/memory footprint — targeting &lt;1% CPU idle.
+      </div>
+    </div>
+    <div class="arch-card">
+      <div class="arch-title">In-Game Addon</div>
+      <div class="arch-badge lua">Lua · WoW API</div>
+      <div class="arch-desc">
+        Reads SavedVariables on load and renders the UI. Uses Blizzard's permitted frame APIs and textures. No CLEU parsing, no combat logic — purely presentational. Ships with a full configuration panel, preset system, and per-character settings. Signals the companion app for a re-export via a configurable chat command or macro.
+      </div>
+    </div>
+    <div class="arch-card">
+      <div class="arch-title">Data Bridge</div>
+      <div class="arch-badge both">SavedVariables · WTF/</div>
+      <div class="arch-desc">
+        Companion writes a <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:11px;">CombatLedger.lua</code> SavedVariables file to the character's WTF directory. Structured as nested Lua tables: session → pull → events. Addon reads this on each UI load. Total data size for a full M+ key typically 80–200 KB — well within WoW's SavedVariables limits.
+      </div>
+    </div>
+    <div class="arch-card">
+      <div class="arch-title">Spell Metadata DB</div>
+      <div class="arch-badge ts">Bundled JSON</div>
+      <div class="arch-desc">
+        Static spell database bundled with the companion app — sourced from Wowhead/WoWDB exports and supplemented manually. Maps spell IDs to: name, school, interruptible flag, CC type, DR category, and priority tier. Updated each patch. Enables the companion to enrich raw log event IDs into meaningful, labeled data before it reaches the addon.
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ================================================ -->
+<!-- 2. FEATURE COMPLEXITY TABLE -->
+<!-- ================================================ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <span class="section-title">Features & Complexity</span>
+    <div class="section-line"></div>
+  </div>
+
+  <table class="complexity-table" style="background:var(--card);border:1px solid var(--border);">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Description</th>
+        <th>Layer</th>
+        <th>Complexity</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Companion Log Watcher</td>
+        <td>File watcher tailing WoWCombatLog.txt in real time, writing to SavedVariables after each encounter</td>
+        <td style="color:var(--sub);font-size:11px;font-family:'JetBrains Mono',monospace;">Companion</td>
+        <td><span class="complexity-badge low">Low</span></td>
+      </tr>
+      <tr>
+        <td>CLEU Event Parser</td>
+        <td>Full parsing of SPELL_DAMAGE, UNIT_DIED, SPELL_INTERRUPT, SPELL_AURA_APPLIED, COMBATANT_INFO etc. into typed structs</td>
+        <td style="color:var(--sub);font-size:11px;font-family:'JetBrains Mono',monospace;">Companion</td>
+        <td><span class="complexity-badge med">Medium</span></td>
+      </tr>
+      <tr>
+        <td>Death Recap Engine</td>
+        <td>Reconstructs the causal event chain leading to each UNIT_DIED: last N damage events, incoming heals, overkill value, active/available defensives at time of death</td>
+        <td style="color:var(--sub);font-size:11px;font-family:'JetBrains Mono',monospace;">Companion</td>
+        <td><span class="complexity-badge med">Medium</span></td>
+      </tr>
+      <tr>
+        <td>Interrupt Report</td>
+        <td>Per-cast interrupt tracking: which player interrupted what, at what % of cast completion, or if the cast went through and why (no one in range, CDs unavailable)</td>
+        <td style="color:var(--sub);font-size:11px;font-family:'JetBrains Mono',monospace;">Companion</td>
+        <td><span class="complexity-badge med">Medium</span></td>
+      </tr>
+      <tr>
+        <td>CC Coverage Visualizer</td>
+        <td>Timeline-style CC chain per target: which spell, which player, duration, DR reduction (requires DR category database), gaps between CC windows</td>
+        <td style="color:var(--sub);font-size:11px;font-family:'JetBrains Mono',monospace;">Companion + Addon</td>
+        <td><span class="complexity-badge high">High</span></td>
+      </tr>
+      <tr>
+        <td>Player Performance Panel</td>
+        <td>Per-player: DPS/HPS from Blizzard meter data, cast uptime %, interrupts contributed, CC contributed, deaths, defensive usage</td>
+        <td style="color:var(--sub);font-size:11px;font-family:'JetBrains Mono',monospace;">Addon + Blizzard API</td>
+        <td><span class="complexity-badge low">Low</span></td>
+      </tr>
+      <tr>
+        <td>In-Game UI Framework</td>
+        <td>Tabbed panel system, player/pull filter chips, preset system with save/load, per-character layout persistence</td>
+        <td style="color:var(--sub);font-size:11px;font-family:'JetBrains Mono',monospace;">Addon (Lua)</td>
+        <td><span class="complexity-badge med">Medium</span></td>
+      </tr>
+      <tr>
+        <td>Spell Metadata Database</td>
+        <td>Static JSON bundled in companion: spell ID → name, interruptible, CC type, DR category, priority. Requires manual curation per patch</td>
+        <td style="color:var(--sub);font-size:11px;font-family:'JetBrains Mono',monospace;">Companion (bundled)</td>
+        <td><span class="complexity-badge med">Medium</span></td>
+      </tr>
+      <tr>
+        <td>Cross-Run Trend Tracking</td>
+        <td>Session-over-session comparison: interrupt rate, death count, uptime trends. Persisted per character-dungeon pair</td>
+        <td style="color:var(--sub);font-size:11px;font-family:'JetBrains Mono',monospace;">Companion + Addon</td>
+        <td><span class="complexity-badge high">High</span></td>
+      </tr>
+      <tr>
+        <td>Companion Auto-Installer</td>
+        <td>CurseForge-distributed package that bundles the companion app alongside the addon. Auto-detects WoW install path, registers as startup item (opt-in)</td>
+        <td style="color:var(--sub);font-size:11px;font-family:'JetBrains Mono',monospace;">Packaging / DevOps</td>
+        <td><span class="complexity-badge high">High</span></td>
+      </tr>
+      <tr>
+        <td>Export / Share</td>
+        <td>CSV export of any panel view. Optional: JSON export for WarcraftLogs-compatible upload format (post-run, not real-time)</td>
+        <td style="color:var(--sub);font-size:11px;font-family:'JetBrains Mono',monospace;">Companion</td>
+        <td><span class="complexity-badge low">Low</span></td>
+      </tr>
+      <tr>
+        <td>Avoidability Annotation</td>
+        <td>Flags deaths and hits as "avoidable" vs "unavoidable" based on spell type metadata (swirlies, targeted AoEs, etc.) and player position/movement data</td>
+        <td style="color:var(--sub);font-size:11px;font-family:'JetBrains Mono',monospace;">Companion</td>
+        <td><span class="complexity-badge very-high">Very High</span></td>
+      </tr>
+      <tr>
+        <td>Defensive Usage Audit</td>
+        <td>Cross-references SPELL_CAST_SUCCESS for known defensive cooldowns with damage spike windows — flags available defensives that weren't used near death events</td>
+        <td style="color:var(--sub);font-size:11px;font-family:'JetBrains Mono',monospace;">Companion</td>
+        <td><span class="complexity-badge high">High</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+<!-- ================================================ -->
+<!-- 3. PHASE ROADMAP -->
+<!-- ================================================ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <span class="section-title">Phase Roadmap</span>
+    <div class="section-line"></div>
+  </div>
+
+  <!-- Phase 1 -->
+  <div class="phase-card p1">
+    <div class="phase-header">
+      <div>
+        <span class="phase-label p1">Phase 1</span>
+        <span class="phase-name">— Foundation & Core Loop</span>
+      </div>
+      <div class="phase-timeline">Weeks 1–8 · ~2 months</div>
+    </div>
+    <div class="phase-body">
+      <ul class="feature-list">
+        <li class="feature-item">
+          <span class="feature-tag arch">ARCH</span>
+          <div class="feature-content">
+            <div class="feature-title">Tauri companion app scaffold</div>
+            <div class="feature-desc">Rust backend + TypeScript frontend. Auto-detects WoW install path on Windows and macOS. File watcher on WoWCombatLog.txt. Writes to WTF/SavedVariables on ENCOUNTER_END detection.</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-tag core">CORE</span>
+          <div class="feature-content">
+            <div class="feature-title">CLEU parser — damage & death events</div>
+            <div class="feature-desc">Parses SPELL_DAMAGE, SWING_DAMAGE, RANGE_DAMAGE, UNIT_DIED, UNIT_DESTROYED, COMBATANT_INFO. Segments by ENCOUNTER_START / ENCOUNTER_END. Outputs typed structs per pull.</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-tag core">CORE</span>
+          <div class="feature-content">
+            <div class="feature-title">Death recap engine (v1)</div>
+            <div class="feature-desc">Reconstructs last 10 seconds of damage/heal events before UNIT_DIED for each player. Calculates overkill. Identifies fatal spell. Bundles into SavedVariables per death.</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-tag core">CORE</span>
+          <div class="feature-content">
+            <div class="feature-title">Interrupt report (v1)</div>
+            <div class="feature-desc">Parses SPELL_INTERRUPT events. Matches to SPELL_CAST_START/SUCCESS on enemies to determine cast completion % at interrupt. Flags uninterrupted casts that were interruptible.</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-tag ux">UX</span>
+          <div class="feature-content">
+            <div class="feature-title">In-game addon — core UI shell</div>
+            <div class="feature-desc">Tabbed frame with Deaths and Interrupts tabs. Player filter chips. Opens via slash command /cl or minimap button. Reads SavedVariables and renders static data. No real-time parsing in addon.</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-tag arch">ARCH</span>
+          <div class="feature-content">
+            <div class="feature-title">Spell metadata database v1</div>
+            <div class="feature-desc">Initial JSON covering Darkflame Cleft, Priory of the Sacred Flame, and the Rookery — the Midnight launch M+ pool. Interruptible flag and CC type per relevant enemy spell.</div>
+          </div>
+        </li>
+      </ul>
+      <div class="phase-sidebar">
+        <div class="sidebar-block">
+          <div class="sidebar-label">Total Complexity</div>
+          <div class="sidebar-value">Medium</div>
+          <div class="complexity-bar"><div class="complexity-fill" style="width:45%;background:var(--p1);"></div></div>
+        </div>
+        <div class="sidebar-block">
+          <div class="sidebar-label">Primary Language</div>
+          <div class="sidebar-value">TypeScript + Lua</div>
+        </div>
+        <div class="sidebar-block">
+          <div class="sidebar-label">Primary Risk</div>
+          <div class="risk-item"><div class="risk-dot med"></div>SavedVariables size limits under heavy logging (mitigation: rolling window, compression)</div>
+          <div class="risk-item"><div class="risk-dot low"></div>WoW install path detection edge cases on non-standard installs</div>
+        </div>
+        <div class="sidebar-block">
+          <div class="sidebar-label">Milestone</div>
+          <div class="sidebar-value" style="font-size:12px;color:var(--p1);">Alpha release on CurseForge — Deaths + Interrupts tabs functional</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 2 -->
+  <div class="phase-card p2">
+    <div class="phase-header">
+      <div>
+        <span class="phase-label p2">Phase 2</span>
+        <span class="phase-name">— CC, Performance & Presets</span>
+      </div>
+      <div class="phase-timeline">Weeks 9–18 · ~2.5 months</div>
+    </div>
+    <div class="phase-body">
+      <ul class="feature-list">
+        <li class="feature-item">
+          <span class="feature-tag core">CORE</span>
+          <div class="feature-content">
+            <div class="feature-title">CC coverage engine with DR tracking</div>
+            <div class="feature-desc">SPELL_AURA_APPLIED / REMOVED parsing per target GUID. DR category database applied to calculate effective duration vs theoretical. Timeline data structure for visualizer. Breaks and early removals flagged.</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-tag ux">UX</span>
+          <div class="feature-content">
+            <div class="feature-title">CC Coverage tab — timeline visualizer</div>
+            <div class="feature-desc">Horizontal CC chain bars per target. Color by player. DR indicated by opacity. Gap windows shown. Interactive: hover for spell/player tooltip, click to jump to that moment in the death timeline if correlated.</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-tag ux">UX</span>
+          <div class="feature-content">
+            <div class="feature-title">Performance tab</div>
+            <div class="feature-desc">DPS/HPS sourced from Blizzard's native meter API (via addon). Cast uptime calculated from log. Interrupt + CC contributions per player. Defensive spell usage summary. Deaths and their impact on uptime clearly visualized.</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-tag ux">UX</span>
+          <div class="feature-content">
+            <div class="feature-title">Preset system</div>
+            <div class="feature-desc">Save current filter state (players, pull, tab, view options) as a named preset. Ship with built-in presets: "Deaths Only", "Tank Focus", "Healer Audit", "M+ Push Review". Presets stored per-character in SavedVariables.</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-tag core">CORE</span>
+          <div class="feature-content">
+            <div class="feature-title">Defensive usage audit (v1)</div>
+            <div class="feature-desc">Cross-reference known defensive spell IDs (Bubble, Feign, Cloak, Blur, etc.) with SPELL_CAST_SUCCESS. Flag cases where a player died and had a defensive available but unused within a ±5s window.</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-tag data">DATA</span>
+          <div class="feature-content">
+            <div class="feature-title">Full M+ dungeon pool metadata</div>
+            <div class="feature-desc">Expand spell database to cover all Midnight Season 1 dungeons. Community contribution pipeline via GitHub PRs for spell metadata — reduces ongoing maintenance burden.</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-tag ux">UX</span>
+          <div class="feature-content">
+            <div class="feature-title">CSV / JSON export</div>
+            <div class="feature-desc">Export any panel view as CSV from the companion app. JSON export in a WarcraftLogs-compatible schema for users who want to cross-reference with external tools without re-uploading.</div>
+          </div>
+        </li>
+      </ul>
+      <div class="phase-sidebar">
+        <div class="sidebar-block">
+          <div class="sidebar-label">Total Complexity</div>
+          <div class="sidebar-value">High</div>
+          <div class="complexity-bar"><div class="complexity-fill" style="width:70%;background:var(--p2);"></div></div>
+        </div>
+        <div class="sidebar-block">
+          <div class="sidebar-label">Primary Language</div>
+          <div class="sidebar-value">TypeScript + Lua</div>
+        </div>
+        <div class="sidebar-block">
+          <div class="sidebar-label">Primary Risk</div>
+          <div class="risk-item"><div class="risk-dot high"></div>DR category database correctness — errors here produce misleading CC visualizations. Needs testing with real log data.</div>
+          <div class="risk-item"><div class="risk-dot med"></div>Blizzard meter API surface may change in 12.0.1 patches during development window</div>
+        </div>
+        <div class="sidebar-block">
+          <div class="sidebar-label">Milestone</div>
+          <div class="sidebar-value" style="font-size:12px;color:var(--p2);">Beta release — all 5 tabs functional. Community feedback loop open.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 3 -->
+  <div class="phase-card p3">
+    <div class="phase-header">
+      <div>
+        <span class="phase-label p3">Phase 3</span>
+        <span class="phase-name">— Trend Intelligence & Distribution</span>
+      </div>
+      <div class="phase-timeline">Weeks 19–28 · ~2.5 months</div>
+    </div>
+    <div class="phase-body">
+      <ul class="feature-list">
+        <li class="feature-item">
+          <span class="feature-tag core">CORE</span>
+          <div class="feature-content">
+            <div class="feature-title">Cross-run trend engine</div>
+            <div class="feature-desc">Persistent session history in companion app (SQLite). Tracks interrupt rate, death count, CC coverage %, uptime %, and cast efficiency per player over N runs of the same dungeon. Surfaces trends: "Korryn's interrupt rate has dropped 20% over last 3 keys."</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-tag ux">UX</span>
+          <div class="feature-content">
+            <div class="feature-title">Trend tab in-game</div>
+            <div class="feature-desc">Spark-line style per-player improvement/regression indicators per metric. "Last 5 runs" view. Click to expand full history. Useful for consistent groups tracking week-over-week improvement during a season.</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-tag core">CORE</span>
+          <div class="feature-content">
+            <div class="feature-title">Avoidability annotation (v1)</div>
+            <div class="feature-desc">Tag damage events as avoidable vs unavoidable using spell metadata (ground AoEs, frontal cones, targeted swirlies). Annotates death recaps and damage-taken summaries with avoidability flag. High maintenance cost — requires manual review per new patch.</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-tag arch">ARCH</span>
+          <div class="feature-content">
+            <div class="feature-title">Companion one-click installer</div>
+            <div class="feature-desc">CurseForge package that bundles addon + companion installer. Platform-native installers (NSIS on Windows, .dmg on macOS). Optional: auto-launch on WoW startup. Open-source companion code on GitHub for trust/transparency.</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-tag data">DATA</span>
+          <div class="feature-content">
+            <div class="feature-title">Raid encounter support</div>
+            <div class="feature-desc">Extend spell metadata and analysis logic to cover raid encounters. Death recaps and interrupt reports particularly high-value in raid context. Encounter-specific notes (e.g., flag deaths to specific boss mechanics).</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="feature-tag ux">UX</span>
+          <div class="feature-content">
+            <div class="feature-title">Shareable run summary link</div>
+            <div class="feature-desc">Optional: Companion app generates a static HTML summary of the run, hosted locally or on a lightweight CDN. Share link in Discord. No account required. Privacy-preserving — all processing stays local.</div>
+          </div>
+        </li>
+      </ul>
+      <div class="phase-sidebar">
+        <div class="sidebar-block">
+          <div class="sidebar-label">Total Complexity</div>
+          <div class="sidebar-value">Very High</div>
+          <div class="complexity-bar"><div class="complexity-fill" style="width:90%;background:var(--p3);"></div></div>
+        </div>
+        <div class="sidebar-block">
+          <div class="sidebar-label">New Tech</div>
+          <div class="sidebar-value">SQLite (local DB)</div>
+        </div>
+        <div class="sidebar-block">
+          <div class="sidebar-label">Primary Risk</div>
+          <div class="risk-item"><div class="risk-dot high"></div>Installer trust/friction — players are skeptical of companion software. Mitigate with open source code, CurseForge distribution, and clear privacy policy.</div>
+          <div class="risk-item"><div class="risk-dot med"></div>Cross-run normalization complexity — different group compositions make trend comparisons noisy. Requires thoughtful data model.</div>
+        </div>
+        <div class="sidebar-block">
+          <div class="sidebar-label">Milestone</div>
+          <div class="sidebar-value" style="font-size:12px;color:var(--p3);">v1.0 stable release. Full feature set. Community adoption push.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ================================================ -->
+<!-- 4. TIMELINE SUMMARY -->
+<!-- ================================================ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <span class="section-title">Timeline at a Glance</span>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="timeline-visual">
+    <div class="tl-item">
+      <div class="tl-dot p1"></div>
+      <div class="tl-date">WEEKS 1–2 · Months 1</div>
+      <div class="tl-title" style="color:var(--p1);">Project Setup & Architecture</div>
+      <div class="tl-desc">Tauri scaffold, file watcher proof-of-concept, SavedVariables bridge test. Validate the read/write loop works end-to-end before building features on top.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot p1"></div>
+      <div class="tl-date">WEEKS 3–5 · Month 1–2</div>
+      <div class="tl-title" style="color:var(--p1);">Core Parser + Death Recap</div>
+      <div class="tl-desc">CLEU parser for damage/death events. Death recap engine. In-game Deaths tab with expandable timeline. Internal playtest with real Midnight log files.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot p1"></div>
+      <div class="tl-date">WEEKS 6–8 · Month 2</div>
+      <div class="tl-title" style="color:var(--p1);">Interrupt Report + Alpha Launch</div>
+      <div class="tl-desc">Interrupt parser. Interrupts tab. Spell metadata DB v1. CurseForge alpha publish. Gather early community feedback on UX and data accuracy.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot p2"></div>
+      <div class="tl-date">WEEKS 9–13 · Month 3</div>
+      <div class="tl-title" style="color:var(--p2);">CC Engine + Visualizer</div>
+      <div class="tl-desc">DR tracking database. CC coverage parser. CC timeline visualizer in-game. Performance tab v1. Preset system. High complexity phase — budget extra time for DR accuracy testing.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot p2"></div>
+      <div class="tl-date">WEEKS 14–18 · Months 4–5</div>
+      <div class="tl-title" style="color:var(--p2);">Defensive Audit + Beta Launch</div>
+      <div class="tl-desc">Defensive usage engine. Export functionality. Full dungeon spell database. Beta release. Wider community testing, iteration on UI based on real feedback.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot p3"></div>
+      <div class="tl-date">WEEKS 19–24 · Months 5–6</div>
+      <div class="tl-title" style="color:var(--p3);">Trend Engine + SQLite</div>
+      <div class="tl-desc">Session persistence, cross-run trend tracking, in-game Trend tab. Avoidability annotation v1. Most technically demanding phase — SQLite integration and data normalization.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot p3"></div>
+      <div class="tl-date">WEEKS 25–28 · Month 7</div>
+      <div class="tl-title" style="color:var(--p3);">Installer + v1.0 Stable</div>
+      <div class="tl-desc">Platform-native installer packaging. Raid support. Shareable summary link. v1.0 stable release. Community launch push on r/wow, WoWUIDev Discord, streamer outreach.</div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;padding:12px 16px;background:var(--card);border:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;text-align:center;">
+    <div>
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:24px;color:var(--p1);">~8 wks</div>
+      <div style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px;">Alpha (Deaths + Interrupts)</div>
+    </div>
+    <div style="border-left:1px solid var(--border);border-right:1px solid var(--border);">
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:24px;color:var(--p2);">~18 wks</div>
+      <div style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px;">Beta (All 5 Tabs)</div>
+    </div>
+    <div>
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:24px;color:var(--p3);">~28 wks</div>
+      <div style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px;">v1.0 Stable Release</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ================================================ -->
+<!-- 5. TECH STACK -->
+<!-- ================================================ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <span class="section-title">Recommended Tech Stack</span>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="stack-row">
+    <div class="stack-item">
+      <div class="stack-name">Tauri 2.0</div>
+      <div class="stack-role">Companion app shell · Rust backend</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-name">TypeScript</div>
+      <div class="stack-role">Companion UI + parser logic</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-name">SQLite (via rusqlite)</div>
+      <div class="stack-role">Session history persistence · Phase 3</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-name">Lua 5.1</div>
+      <div class="stack-role">In-game addon (WoW runtime)</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-name">Ace3 Framework</div>
+      <div class="stack-role">Addon scaffolding · Config panels · SavedVariables</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-name">JSON (bundled)</div>
+      <div class="stack-role">Spell metadata database</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-name">GitHub Actions</div>
+      <div class="stack-role">CI/CD · CurseForge auto-publish</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-name">NSIS / macOS pkg</div>
+      <div class="stack-role">Companion installer packaging · Phase 3</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

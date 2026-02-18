@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CombatLedger — Post-Combat Analysis</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Barlow:wght@300;400;500&display=swap');
+
+  :root {
+    --bg-base: #0a0c10;
+    --bg-panel: #0f1219;
+    --bg-card: #141820;
+    --bg-hover: #1a2030;
+    --border: #1e2535;
+    --border-light: #252d40;
+    --accent: #e8a820;
+    --accent-dim: #b07a10;
+    --accent-glow: rgba(232,168,32,0.15);
+    --text-primary: #d4dcea;
+    --text-secondary: #6b7a9a;
+    --text-muted: #3d4a62;
+    --death: #e84040;
+    --death-dim: rgba(232,64,64,0.15);
+    --interrupt: #40b8e8;
+    --interrupt-dim: rgba(64,184,232,0.12);
+    --cc: #b040e8;
+    --cc-dim: rgba(176,64,232,0.12);
+    --heal: #40e87a;
+    --heal-dim: rgba(64,232,122,0.12);
+    --damage: #e86040;
+
+    /* Class colors */
+    --paladin: #f58cba;
+    --priest: #ffffff;
+    --rogue: #fff569;
+    --shaman: #0070de;
+    --dh: #a330c9;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* === ADDON FRAME === */
+  .addon-frame {
+    position: relative;
+    max-width: 960px;
+    margin: 32px auto;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-light);
+    box-shadow:
+      0 0 0 1px var(--border),
+      0 0 40px rgba(0,0,0,0.8),
+      inset 0 1px 0 rgba(255,255,255,0.03);
+    animation: frameIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes frameIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.99); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* Corner decorations */
+  .addon-frame::before, .addon-frame::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-color: var(--accent);
+    border-style: solid;
+  }
+  .addon-frame::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+  .addon-frame::after  { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+
+  .corner-bl, .corner-br {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-color: var(--accent);
+    border-style: solid;
+  }
+  .corner-bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+  .corner-br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+  /* === TITLEBAR === */
+  .titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: linear-gradient(90deg, #0d1018 0%, #111520 100%);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .title-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-mark {
+    width: 22px;
+    height: 22px;
+    background: var(--accent);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    color: #000;
+    position: relative;
+  }
+
+  .addon-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 3px;
+    color: var(--text-primary);
+    text-transform: uppercase;
+  }
+
+  .addon-name span {
+    color: var(--accent);
+  }
+
+  .title-meta {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+
+  .title-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .session-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .close-btn {
+    width: 18px;
+    height: 18px;
+    background: none;
+    border: 1px solid #3d4a62;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .close-btn:hover { border-color: var(--death); color: var(--death); }
+
+  /* === TAB BAR === */
+  .tab-bar {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-base);
+    padding: 0 16px;
+    gap: 2px;
+  }
+
+  .tab {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    white-space: nowrap;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    position: relative;
+  }
+
+  .tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.02); }
+
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  .tab-dot {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--death);
+    margin-left: 6px;
+    vertical-align: middle;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* === FILTER BAR === */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .filter-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-right: 4px;
+  }
+
+  .filter-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    font-family: 'Barlow', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+
+  .filter-chip:hover { border-color: var(--accent-dim); color: var(--text-primary); }
+
+  .filter-chip.active {
+    background: var(--accent-glow);
+    border-color: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  .filter-chip .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .filter-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    margin: 0 4px;
+  }
+
+  .preset-select {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    font-size: 11px;
+    font-family: 'Barlow', sans-serif;
+    cursor: pointer;
+    outline: none;
+    margin-left: auto;
+  }
+
+  /* === CONTENT AREA === */
+  .content {
+    padding: 16px;
+    display: grid;
+    gap: 12px;
+  }
+
+  /* === ENCOUNTER HEADER === */
+  .encounter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: linear-gradient(90deg, rgba(232,168,32,0.08) 0%, transparent 60%);
+    border: 1px solid var(--border-light);
+    border-left: 3px solid var(--accent);
+  }
+
+  .encounter-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: var(--text-primary);
+  }
+
+  .encounter-sub {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .encounter-stats {
+    display: flex;
+    gap: 24px;
+  }
+
+  .enc-stat {
+    text-align: right;
+  }
+
+  .enc-stat-val {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--text-primary);
+  }
+
+  .enc-stat-val.good { color: var(--heal); }
+  .enc-stat-val.bad { color: var(--death); }
+
+  .enc-stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* === SECTION HEADER === */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .section-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-secondary);
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .section-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  /* === DEATH RECAP === */
+  .death-recap-grid {
+    display: grid;
+    gap: 8px;
+  }
+
+  .death-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--death);
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+
+  .death-card:hover { border-color: var(--death); }
+
+  .death-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    background: var(--death-dim);
+  }
+
+  .player-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
+  }
+
+  .death-player-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+
+  .death-player-role {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .death-time {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .expand-icon {
+    color: var(--text-muted);
+    font-size: 10px;
+    transition: transform 0.2s;
+  }
+
+  .death-card.expanded .expand-icon { transform: rotate(180deg); }
+
+  /* Timeline */
+  .death-timeline {
+    display: none;
+    padding: 0 14px 12px;
+    border-top: 1px solid var(--border);
+    margin-top: 0;
+  }
+
+  .death-card.expanded .death-timeline { display: block; }
+
+  .timeline-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    padding: 8px 0 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .timeline-events {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .timeline-event {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 8px;
+    font-size: 11px;
+    border-left: 2px solid var(--border);
+    transition: background 0.1s;
+  }
+
+  .timeline-event:hover { background: rgba(255,255,255,0.02); }
+
+  .timeline-event.fatal {
+    border-left-color: var(--death);
+    background: var(--death-dim);
+  }
+
+  .timeline-event.big-hit {
+    border-left-color: var(--damage);
+    background: rgba(232,96,64,0.06);
+  }
+
+  .timeline-event.heal {
+    border-left-color: var(--heal);
+    background: var(--heal-dim);
+  }
+
+  .event-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    width: 42px;
+    flex-shrink: 0;
+  }
+
+  .event-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    flex-shrink: 0;
+  }
+
+  .event-icon.dmg { background: rgba(232,96,64,0.25); color: var(--damage); }
+  .event-icon.heal-i { background: var(--heal-dim); color: var(--heal); }
+  .event-icon.fatal-i { background: var(--death-dim); color: var(--death); }
+
+  .event-source {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    font-size: 10px;
+  }
+
+  .event-spell {
+    color: var(--text-primary);
+    flex: 1;
+  }
+
+  .event-amount {
+    font-family: 'Rajdhani', monospace;
+    font-weight: 600;
+    font-size: 13px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .event-amount.red { color: var(--death); }
+  .event-amount.orange { color: #e8a040; }
+  .event-amount.green { color: var(--heal); }
+
+  .health-bar-mini {
+    height: 3px;
+    background: var(--border);
+    margin: 6px 0 4px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .health-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--heal), #a0e840);
+    transition: width 0.3s;
+  }
+
+  .health-fill.low { background: linear-gradient(90deg, var(--death), var(--damage)); }
+
+  /* === INTERRUPT PANEL === */
+  .interrupt-table {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .itable-header {
+    display: grid;
+    grid-template-columns: 1fr 140px 90px 90px 80px;
+    padding: 8px 14px;
+    background: var(--bg-base);
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    gap: 8px;
+  }
+
+  .itable-row {
+    display: grid;
+    grid-template-columns: 1fr 140px 90px 90px 80px;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.1s;
+  }
+
+  .itable-row:last-child { border-bottom: none; }
+  .itable-row:hover { background: var(--bg-hover); }
+
+  .itable-row.missed {
+    background: rgba(232,64,64,0.04);
+  }
+
+  .enemy-name {
+    font-family: 'Barlow', sans-serif;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .enemy-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .interrupter-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+  }
+
+  .spell-name {
+    font-size: 11px;
+    color: var(--interrupt);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .spell-name.missed-spell {
+    color: var(--death);
+    text-decoration: line-through;
+    text-decoration-color: rgba(232,64,64,0.5);
+  }
+
+  .cast-time-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 3px;
+  }
+
+  .cast-fill {
+    height: 100%;
+    border-radius: 2px;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid;
+  }
+
+  .status-badge.interrupted { color: var(--interrupt); border-color: rgba(64,184,232,0.3); background: var(--interrupt-dim); }
+  .status-badge.missed { color: var(--death); border-color: rgba(232,64,64,0.3); background: var(--death-dim); }
+  .status-badge.partial { color: var(--accent); border-color: rgba(232,168,32,0.3); background: var(--accent-glow); }
+
+  /* === CC PANEL === */
+  .cc-grid {
+    display: grid;
+    gap: 8px;
+  }
+
+  .cc-row {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .cc-target {
+    min-width: 150px;
+  }
+
+  .cc-target-name {
+    font-weight: 500;
+    font-size: 12px;
+  }
+
+  .cc-target-type {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .cc-chain {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 28px;
+  }
+
+  .cc-segment {
+    height: 20px;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .cc-segment:hover { opacity: 0.85; filter: brightness(1.2); }
+
+  .cc-gap {
+    width: 4px;
+    height: 20px;
+    background: var(--border);
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+
+  .cc-coverage {
+    min-width: 60px;
+    text-align: right;
+  }
+
+  .cc-pct {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .cc-pct.high { color: var(--heal); }
+  .cc-pct.med { color: var(--accent); }
+  .cc-pct.low { color: var(--death); }
+
+  .cc-pct-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* === PLAYER PERFORMANCE === */
+  .perf-grid {
+    display: grid;
+    gap: 6px;
+  }
+
+  .perf-row {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: border-color 0.15s;
+  }
+
+  .perf-row:hover { border-color: var(--border-light); }
+
+  .perf-player {
+    min-width: 160px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .perf-bar-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .perf-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .perf-bar-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    width: 24px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .perf-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-base);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  .perf-bar-fill {
+    height: 100%;
+    border-radius: 1px;
+    transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .perf-bar-val {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--text-primary);
+    min-width: 56px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .perf-stats {
+    display: flex;
+    gap: 16px;
+    min-width: 200px;
+  }
+
+  .perf-stat {
+    text-align: center;
+  }
+
+  .perf-stat-val {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .perf-stat-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  /* === BOTTOM BAR === */
+  .bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-base);
+  }
+
+  .bottom-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+  }
+
+  .bottom-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .action-btn {
+    padding: 5px 12px;
+    background: none;
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .action-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+  .action-btn.primary {
+    background: var(--accent-glow);
+    border-color: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  .action-btn.primary:hover { background: rgba(232,168,32,0.25); }
+
+  /* Tab panels */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Misc */
+  .row-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .tooltip {
+    position: relative;
+  }
+
+  .tooltip:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0a0c10;
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 4px 8px;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  /* Highlight for "new data" loaded indicator */
+  .data-loaded {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: var(--heal);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .data-loaded::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--heal);
+    animation: pulse 1.5s infinite;
+  }
+
+  /* === RESPONSIVE SCROLLABLE === */
+  .overflow-x {
+    overflow-x: auto;
+  }
+
+  /* Uptime pips */
+  .uptime-pips {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+  }
+
+  .pip {
+    width: 8px;
+    height: 8px;
+    border-radius: 1px;
+  }
+
+  .pip.on { background: var(--heal); }
+  .pip.off { background: var(--border-light); }
+  .pip.partial { background: var(--accent); }
+
+</style>
+</head>
+<body>
+
+<div class="addon-frame">
+  <div class="corner-bl"></div>
+  <div class="corner-br"></div>
+
+  <!-- TITLEBAR -->
+  <div class="titlebar">
+    <div class="title-left">
+      <div class="logo-mark">CL</div>
+      <div>
+        <div class="addon-name">Combat<span>Ledger</span></div>
+        <div class="title-meta">POST-COMBAT ANALYSIS ENGINE</div>
+      </div>
+    </div>
+    <div class="title-right">
+      <div class="data-loaded">LOG SYNCED · 0.3s AGO</div>
+      <div class="session-badge">SESSION #4 · MYTHIC+ 14</div>
+      <button class="close-btn">✕</button>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('overview')">Overview</button>
+    <button class="tab" onclick="switchTab('deaths')">Deaths <span class="tab-dot"></span></button>
+    <button class="tab" onclick="switchTab('interrupts')">Interrupts</button>
+    <button class="tab" onclick="switchTab('cc')">CC Coverage</button>
+    <button class="tab" onclick="switchTab('performance')">Performance</button>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <span class="filter-label">Players</span>
+    <div class="filter-chip active" onclick="toggleChip(this)">
+      <span class="dot" style="background:var(--paladin)"></span> Valdris
+    </div>
+    <div class="filter-chip active" onclick="toggleChip(this)">
+      <span class="dot" style="background:var(--priest)"></span> Seraphine
+    </div>
+    <div class="filter-chip active" onclick="toggleChip(this)">
+      <span class="dot" style="background:var(--rogue)"></span> Korryn
+    </div>
+    <div class="filter-chip active" onclick="toggleChip(this)">
+      <span class="dot" style="background:var(--shaman)"></span> Dravek
+    </div>
+    <div class="filter-chip active" onclick="toggleChip(this)">
+      <span class="dot" style="background:var(--dh)"></span> Nyxara
+    </div>
+    <div class="filter-divider"></div>
+    <span class="filter-label">Pull</span>
+    <div class="filter-chip active" onclick="toggleChip(this)">All Pulls</div>
+    <div class="filter-chip" onclick="toggleChip(this)">Pull 1</div>
+    <div class="filter-chip" onclick="toggleChip(this)">Pull 2</div>
+    <div class="filter-chip" onclick="toggleChip(this)">Boss</div>
+    <div class="filter-divider"></div>
+    <select class="preset-select">
+      <option>Preset: Default</option>
+      <option>Preset: Deaths Only</option>
+      <option>Preset: Tank Focus</option>
+      <option>Preset: Healer Audit</option>
+      <option>Preset: M+ Push Review</option>
+      <option>── Save current as preset...</option>
+    </select>
+  </div>
+
+  <!-- ===================== OVERVIEW TAB ===================== -->
+  <div class="tab-panel active" id="tab-overview">
+    <div class="content">
+
+      <!-- Encounter header -->
+      <div class="encounter-header">
+        <div>
+          <div class="encounter-name">Darkflame Cleft — Mythic +14</div>
+          <div class="encounter-sub">2 PULLS · 4m 38s · FORT/BURSTING · COMPLETED</div>
+        </div>
+        <div class="encounter-stats">
+          <div class="enc-stat">
+            <div class="enc-stat-val">2</div>
+            <div class="enc-stat-label">Deaths</div>
+          </div>
+          <div class="enc-stat">
+            <div class="enc-stat-val">7 / 9</div>
+            <div class="enc-stat-label">Interrupts</div>
+          </div>
+          <div class="enc-stat">
+            <div class="enc-stat-val good">78%</div>
+            <div class="enc-stat-label">CC Cov.</div>
+          </div>
+          <div class="enc-stat">
+            <div class="enc-stat-val bad">22%</div>
+            <div class="enc-stat-label">Missed</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2-col: death summary + interrupt summary -->
+      <div class="row-2col">
+
+        <!-- Quick Death Summary -->
+        <div>
+          <div class="section-header">
+            <span class="section-title">Death Summary</span>
+            <div class="section-line"></div>
+            <span class="section-count">2 events</span>
+          </div>
+          <div style="background:var(--bg-card);border:1px solid var(--border);padding:12px 14px;display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="player-avatar" style="background:rgba(245,140,186,0.12);color:var(--paladin);border-color:rgba(245,140,186,0.2);">RET</div>
+              <div>
+                <div style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--paladin);">Valdris</div>
+                <div style="font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">Ret Paladin · Pull 1 · 1m 12s</div>
+              </div>
+              <div style="margin-left:auto;font-size:11px;color:var(--death);font-family:'JetBrains Mono',monospace;">Fatal: Shadowquake</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="player-avatar" style="background:rgba(0,112,222,0.12);color:var(--shaman);border-color:rgba(0,112,222,0.2);">ELE</div>
+              <div>
+                <div style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--shaman);">Dravek</div>
+                <div style="font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">Ele Shaman · Pull 2 · 2m 44s</div>
+              </div>
+              <div style="margin-left:auto;font-size:11px;color:var(--death);font-family:'JetBrains Mono',monospace;">Fatal: Darkbolt Volley</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Interrupt Summary -->
+        <div>
+          <div class="section-header">
+            <span class="section-title">Interrupt Summary</span>
+            <div class="section-line"></div>
+            <span class="section-count">9 attempts</span>
+          </div>
+          <div style="background:var(--bg-card);border:1px solid var(--border);padding:12px 14px;display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:12px;color:var(--dh);min-width:70px;">Nyxara</div>
+              <div style="flex:1;height:8px;background:var(--bg-base);border-radius:1px;overflow:hidden;">
+                <div style="height:100%;width:100%;background:var(--dh);border-radius:1px;opacity:0.7;"></div>
+              </div>
+              <div style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;color:var(--text-primary);min-width:30px;text-align:right;">3/3</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:12px;color:var(--rogue);min-width:70px;">Korryn</div>
+              <div style="flex:1;height:8px;background:var(--bg-base);border-radius:1px;overflow:hidden;">
+                <div style="height:100%;width:66%;background:var(--rogue);border-radius:1px;opacity:0.7;"></div>
+              </div>
+              <div style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;color:var(--text-primary);min-width:30px;text-align:right;">2/3</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:12px;color:var(--shaman);min-width:70px;">Dravek</div>
+              <div style="flex:1;height:8px;background:var(--bg-base);border-radius:1px;overflow:hidden;">
+                <div style="height:100%;width:66%;background:var(--shaman);border-radius:1px;opacity:0.7;"></div>
+              </div>
+              <div style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;color:var(--text-primary);min-width:30px;text-align:right;">2/3</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== DEATHS TAB ===================== -->
+  <div class="tab-panel" id="tab-deaths">
+    <div class="content">
+
+      <div class="encounter-header">
+        <div>
+          <div class="encounter-name">Darkflame Cleft</div>
+          <div class="encounter-sub">2 PLAYER DEATHS · CLICK TO EXPAND CAUSAL TIMELINE</div>
+        </div>
+        <div class="encounter-stats">
+          <div class="enc-stat">
+            <div class="enc-stat-val bad">149,420</div>
+            <div class="enc-stat-label">Avg. Fatal Hit</div>
+          </div>
+          <div class="enc-stat">
+            <div class="enc-stat-val">1</div>
+            <div class="enc-stat-label">Avoidable</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-header">
+          <span class="section-title">Death Recaps</span>
+          <div class="section-line"></div>
+          <span class="section-count">showing events –8s to fatal</span>
+        </div>
+
+        <div class="death-recap-grid">
+
+          <!-- DEATH 1: Valdris -->
+          <div class="death-card expanded" onclick="toggleDeath(this)">
+            <div class="death-card-header">
+              <div class="player-avatar" style="background:rgba(245,140,186,0.12);color:var(--paladin);border-color:rgba(245,140,186,0.2);">RET</div>
+              <div>
+                <div class="death-player-name" style="color:var(--paladin);">Valdris</div>
+                <div class="death-player-role">Ret Paladin · DPS · Pull 1</div>
+              </div>
+              <div class="death-time">T+1:12.4</div>
+              <span class="expand-icon">▼</span>
+            </div>
+            <div class="death-timeline">
+              <div class="timeline-label">— Damage Intake (last 8s before death) —</div>
+              <div class="health-bar-mini" style="margin-bottom:8px;">
+                <div class="health-fill" style="width:82%"></div>
+              </div>
+              <div class="timeline-events">
+                <div class="timeline-event">
+                  <span class="event-time">–7.9s</span>
+                  <span class="event-icon dmg">▼</span>
+                  <span class="event-source">Darkwatcher</span>
+                  <span class="event-spell">Void Cleave (melee)</span>
+                  <span class="event-amount orange">–31,840</span>
+                </div>
+                <div class="timeline-event">
+                  <span class="event-time">–6.1s</span>
+                  <span class="event-icon heal-i">▲</span>
+                  <span class="event-source">Seraphine</span>
+                  <span class="event-spell">Flash of Light</span>
+                  <span class="event-amount green">+48,200</span>
+                </div>
+                <div class="timeline-event">
+                  <span class="event-time">–5.3s</span>
+                  <span class="event-icon dmg">▼</span>
+                  <span class="event-source">Darkwatcher</span>
+                  <span class="event-spell">Umbral Spike</span>
+                  <span class="event-amount orange">–67,150</span>
+                </div>
+                <div class="timeline-event big-hit">
+                  <span class="event-time">–3.8s</span>
+                  <span class="event-icon dmg">▼</span>
+                  <span class="event-source">Darkwatcher</span>
+                  <span class="event-spell">Shadowquake (AoE)</span>
+                  <span class="event-amount red">–94,300</span>
+                </div>
+                <div class="timeline-event">
+                  <span class="event-time">–3.1s</span>
+                  <span class="event-icon dmg">▼</span>
+                  <span class="event-source">Obsidian Slug</span>
+                  <span class="event-spell">Corrosive Spit</span>
+                  <span class="event-amount orange">–28,440</span>
+                </div>
+                <div class="timeline-event">
+                  <span class="event-time">–2.4s</span>
+                  <span class="event-icon dmg">▼</span>
+                  <span class="event-source">Darkwatcher</span>
+                  <span class="event-spell">Void Cleave (melee)</span>
+                  <span class="event-amount orange">–34,110</span>
+                </div>
+                <div class="timeline-event fatal">
+                  <span class="event-time">–0.0s</span>
+                  <span class="event-icon fatal-i">☠</span>
+                  <span class="event-source">Darkwatcher</span>
+                  <span class="event-spell">Shadowquake — <strong>FATAL · Overkill 12,820</strong></span>
+                  <span class="event-amount red">–149,420</span>
+                </div>
+              </div>
+              <div style="margin-top:10px;padding:8px 10px;background:rgba(232,168,32,0.06);border:1px solid rgba(232,168,32,0.15);font-size:11px;color:var(--text-secondary);">
+                <span style="color:var(--accent);font-family:'Rajdhani',sans-serif;font-weight:600;letter-spacing:0.5px;">NOTE  </span>
+                Shadowquake was <strong style="color:var(--text-primary);">not interrupted</strong> (no interrupter in range). Valdris had <strong style="color:var(--text-primary);">Divine Shield available</strong> (12s remaining on CD). Avoidable with positioning.
+              </div>
+            </div>
+          </div>
+
+          <!-- DEATH 2: Dravek -->
+          <div class="death-card" onclick="toggleDeath(this)">
+            <div class="death-card-header">
+              <div class="player-avatar" style="background:rgba(0,112,222,0.12);color:var(--shaman);border-color:rgba(0,112,222,0.2);">ELE</div>
+              <div>
+                <div class="death-player-name" style="color:var(--shaman);">Dravek</div>
+                <div class="death-player-role">Ele Shaman · DPS · Pull 2</div>
+              </div>
+              <div class="death-time">T+2:44.1</div>
+              <span class="expand-icon">▼</span>
+            </div>
+            <div class="death-timeline">
+              <!-- collapsed -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== INTERRUPTS TAB ===================== -->
+  <div class="tab-panel" id="tab-interrupts">
+    <div class="content">
+
+      <div class="encounter-header">
+        <div>
+          <div class="encounter-name">Interrupt Report</div>
+          <div class="encounter-sub">ALL PULLS · 9 INTERRUPT OPPORTUNITIES</div>
+        </div>
+        <div class="encounter-stats">
+          <div class="enc-stat">
+            <div class="enc-stat-val">7</div>
+            <div class="enc-stat-label">Interrupted</div>
+          </div>
+          <div class="enc-stat">
+            <div class="enc-stat-val bad">2</div>
+            <div class="enc-stat-label">Missed</div>
+          </div>
+          <div class="enc-stat">
+            <div class="enc-stat-val good">77%</div>
+            <div class="enc-stat-label">Rate</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="overflow-x">
+        <div class="interrupt-table">
+          <div class="itable-header">
+            <div>Target · Cast</div>
+            <div>Interrupted By</div>
+            <div>Spell Used</div>
+            <div>Cast Progress</div>
+            <div>Status</div>
+          </div>
+
+          <!-- Row 1 -->
+          <div class="itable-row">
+            <div>
+              <div class="enemy-name">Darkwatcher</div>
+              <div class="enemy-sub">Void Surge · 2.5s cast · Pull 1</div>
+            </div>
+            <div class="interrupter-name" style="color:var(--dh);">Nyxara</div>
+            <div class="spell-name">Disrupt</div>
+            <div>
+              <div style="font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-bottom:3px;">62% into cast</div>
+              <div class="cast-time-bar"><div class="cast-fill" style="width:62%;background:var(--interrupt);"></div></div>
+            </div>
+            <div><span class="status-badge interrupted">✓ Kicked</span></div>
+          </div>
+
+          <!-- Row 2 -->
+          <div class="itable-row">
+            <div>
+              <div class="enemy-name">Obsidian Cantor</div>
+              <div class="enemy-sub">Dark Chorus · 3.0s cast · Pull 1</div>
+            </div>
+            <div class="interrupter-name" style="color:var(--rogue);">Korryn</div>
+            <div class="spell-name">Kick</div>
+            <div>
+              <div style="font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-bottom:3px;">48% into cast</div>
+              <div class="cast-time-bar"><div class="cast-fill" style="width:48%;background:var(--interrupt);"></div></div>
+            </div>
+            <div><span class="status-badge interrupted">✓ Kicked</span></div>
+          </div>
+
+          <!-- Row 3 - MISSED -->
+          <div class="itable-row missed">
+            <div>
+              <div class="enemy-name">Darkwatcher</div>
+              <div class="enemy-sub">Shadowquake · 2.0s cast · Pull 1</div>
+            </div>
+            <div style="color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;">— none —</div>
+            <div class="spell-name missed-spell">No interrupter</div>
+            <div>
+              <div style="font-size:10px;color:var(--death);font-family:'JetBrains Mono',monospace;margin-bottom:3px;">Full cast completed</div>
+              <div class="cast-time-bar"><div class="cast-fill" style="width:100%;background:var(--death);"></div></div>
+            </div>
+            <div><span class="status-badge missed">✕ Missed</span></div>
+          </div>
+
+          <!-- Row 4 -->
+          <div class="itable-row">
+            <div>
+              <div class="enemy-name">Flamecaller Rix</div>
+              <div class="enemy-sub">Pyretic Cascade · 2.8s cast · Pull 1</div>
+            </div>
+            <div class="interrupter-name" style="color:var(--shaman);">Dravek</div>
+            <div class="spell-name">Wind Shear</div>
+            <div>
+              <div style="font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-bottom:3px;">71% into cast</div>
+              <div class="cast-time-bar"><div class="cast-fill" style="width:71%;background:var(--interrupt);"></div></div>
+            </div>
+            <div><span class="status-badge interrupted">✓ Kicked</span></div>
+          </div>
+
+          <!-- Row 5 -->
+          <div class="itable-row">
+            <div>
+              <div class="enemy-name">Darkwatcher</div>
+              <div class="enemy-sub">Void Surge · 2.5s cast · Pull 2</div>
+            </div>
+            <div class="interrupter-name" style="color:var(--dh);">Nyxara</div>
+            <div class="spell-name">Disrupt</div>
+            <div>
+              <div style="font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-bottom:3px;">55% into cast</div>
+              <div class="cast-time-bar"><div class="cast-fill" style="width:55%;background:var(--interrupt);"></div></div>
+            </div>
+            <div><span class="status-badge interrupted">✓ Kicked</span></div>
+          </div>
+
+          <!-- Row 6 -->
+          <div class="itable-row">
+            <div>
+              <div class="enemy-name">Obsidian Cantor</div>
+              <div class="enemy-sub">Dark Chorus · 3.0s cast · Pull 2</div>
+            </div>
+            <div class="interrupter-name" style="color:var(--dh);">Nyxara</div>
+            <div class="spell-name">Disrupt</div>
+            <div>
+              <div style="font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-bottom:3px;">40% into cast</div>
+              <div class="cast-time-bar"><div class="cast-fill" style="width:40%;background:var(--interrupt);"></div></div>
+            </div>
+            <div><span class="status-badge interrupted">✓ Kicked</span></div>
+          </div>
+
+          <!-- Row 7 - MISSED -->
+          <div class="itable-row missed">
+            <div>
+              <div class="enemy-name">Flamecaller Rix</div>
+              <div class="enemy-sub">Darkbolt Volley · 2.2s cast · Pull 2</div>
+            </div>
+            <div style="color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;">— none —</div>
+            <div class="spell-name missed-spell">CDs on cooldown</div>
+            <div>
+              <div style="font-size:10px;color:var(--death);font-family:'JetBrains Mono',monospace;margin-bottom:3px;">Full cast · Dravek died</div>
+              <div class="cast-time-bar"><div class="cast-fill" style="width:100%;background:var(--death);"></div></div>
+            </div>
+            <div><span class="status-badge missed">✕ Missed</span></div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== CC TAB ===================== -->
+  <div class="tab-panel" id="tab-cc">
+    <div class="content">
+
+      <div class="encounter-header">
+        <div>
+          <div class="encounter-name">CC Coverage</div>
+          <div class="encounter-sub">ALL PULLS · CROWD CONTROL BY TARGET</div>
+        </div>
+        <div class="encounter-stats">
+          <div class="enc-stat">
+            <div class="enc-stat-val good">78%</div>
+            <div class="enc-stat-label">Avg Coverage</div>
+          </div>
+          <div class="enc-stat">
+            <div class="enc-stat-val">3</div>
+            <div class="enc-stat-label">Targets CC'd</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-header">
+          <span class="section-title">Target CC Chains</span>
+          <div class="section-line"></div>
+          <span class="section-count">time →</span>
+        </div>
+
+        <div class="cc-grid">
+
+          <!-- Obsidian Cantor -->
+          <div class="cc-row">
+            <div class="cc-target">
+              <div class="cc-target-name">Obsidian Cantor</div>
+              <div class="cc-target-type">HUMANOID · PRIORITY</div>
+            </div>
+            <div class="cc-chain">
+              <div class="cc-segment tooltip" data-tip="Korryn: Blind · 8s" style="width:110px;background:rgba(255,245,105,0.15);color:var(--rogue);border:1px solid rgba(255,245,105,0.2);">Blind 8s</div>
+              <div class="cc-gap"></div>
+              <div class="cc-segment tooltip" data-tip="Korryn: Cheap Shot · 4s" style="width:60px;background:rgba(255,245,105,0.15);color:var(--rogue);border:1px solid rgba(255,245,105,0.2);">C.Shot</div>
+              <div class="cc-gap"></div>
+              <div class="cc-segment tooltip" data-tip="Dravek: Capacitor Totem · 3s" style="width:45px;background:rgba(0,112,222,0.15);color:var(--shaman);border:1px solid rgba(0,112,222,0.2);">Cap.</div>
+            </div>
+            <div class="cc-coverage">
+              <div class="cc-pct high">91%</div>
+              <div class="cc-pct-label">coverage</div>
+            </div>
+          </div>
+
+          <!-- Darkwatcher -->
+          <div class="cc-row">
+            <div class="cc-target">
+              <div class="cc-target-name">Darkwatcher</div>
+              <div class="cc-target-type">DEMON · PARTIAL IMMUNE</div>
+            </div>
+            <div class="cc-chain">
+              <div class="cc-segment tooltip" data-tip="Nyxara: Imprison · 6s" style="width:85px;background:rgba(163,48,201,0.15);color:var(--dh);border:1px solid rgba(163,48,201,0.2);">Imprison 6s</div>
+              <div class="cc-gap"></div>
+              <div class="cc-gap" style="width:30px;background:transparent;"></div>
+              <div class="cc-segment tooltip" data-tip="Korryn: Sap · 0s (broke early)" style="width:20px;background:rgba(232,64,64,0.1);color:var(--death);border:1px solid rgba(232,64,64,0.2);" >!</div>
+            </div>
+            <div class="cc-coverage">
+              <div class="cc-pct med">52%</div>
+              <div class="cc-pct-label">coverage</div>
+            </div>
+          </div>
+
+          <!-- Flamecaller -->
+          <div class="cc-row">
+            <div class="cc-target">
+              <div class="cc-target-name">Flamecaller Rix</div>
+              <div class="cc-target-type">ELEMENTAL · HIGH THREAT</div>
+            </div>
+            <div class="cc-chain">
+              <div class="cc-segment tooltip" data-tip="Dravek: Hex · 8s" style="width:110px;background:rgba(0,112,222,0.15);color:var(--shaman);border:1px solid rgba(0,112,222,0.2);">Hex 8s</div>
+              <div class="cc-gap"></div>
+              <div class="cc-segment tooltip" data-tip="Dravek: Hex · 5s (DR)" style="width:70px;background:rgba(0,112,222,0.10);color:var(--shaman);border:1px solid rgba(0,112,222,0.15);opacity:0.7;">Hex 5s DR</div>
+            </div>
+            <div class="cc-coverage">
+              <div class="cc-pct high">82%</div>
+              <div class="cc-pct-label">coverage</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="margin-top:12px;padding:8px 12px;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;gap:16px;font-size:11px;">
+          <div style="display:flex;align-items:center;gap:5px;"><div style="width:12px;height:12px;background:rgba(255,245,105,0.2);border:1px solid rgba(255,245,105,0.3);border-radius:1px;"></div><span style="color:var(--text-secondary);">Korryn (Rogue)</span></div>
+          <div style="display:flex;align-items:center;gap:5px;"><div style="width:12px;height:12px;background:rgba(0,112,222,0.2);border:1px solid rgba(0,112,222,0.3);border-radius:1px;"></div><span style="color:var(--text-secondary);">Dravek (Shaman)</span></div>
+          <div style="display:flex;align-items:center;gap:5px;"><div style="width:12px;height:12px;background:rgba(163,48,201,0.2);border:1px solid rgba(163,48,201,0.3);border-radius:1px;"></div><span style="color:var(--text-secondary);">Nyxara (DH)</span></div>
+          <div style="display:flex;align-items:center;gap:5px;"><div style="width:12px;height:12px;background:rgba(232,64,64,0.15);border:1px solid rgba(232,64,64,0.3);border-radius:1px;"></div><span style="color:var(--text-secondary);">! = broke early / immune</span></div>
+          <div style="margin-left:auto;font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">DR chains visualized by opacity</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== PERFORMANCE TAB ===================== -->
+  <div class="tab-panel" id="tab-performance">
+    <div class="content">
+
+      <div class="encounter-header">
+        <div>
+          <div class="encounter-name">Player Performance</div>
+          <div class="encounter-sub">ALL PULLS · CAST EFFICIENCY + CONTRIBUTION</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-header">
+          <span class="section-title">Contribution & Uptime</span>
+          <div class="section-line"></div>
+        </div>
+
+        <div class="perf-grid">
+
+          <!-- Nyxara - VDH -->
+          <div class="perf-row">
+            <div class="perf-player">
+              <div class="player-avatar" style="background:rgba(163,48,201,0.12);color:var(--dh);border-color:rgba(163,48,201,0.2);">VDH</div>
+              <div>
+                <div style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--dh);">Nyxara</div>
+                <div style="font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">Vengeance DH</div>
+              </div>
+            </div>
+            <div class="perf-bar-section">
+              <div class="perf-bar-row">
+                <span class="perf-bar-label">DMG</span>
+                <div class="perf-bar"><div class="perf-bar-fill" style="width:58%;background:var(--dh);opacity:0.7;"></div></div>
+                <span class="perf-bar-val">182k</span>
+              </div>
+              <div class="perf-bar-row">
+                <span class="perf-bar-label">MIT</span>
+                <div class="perf-bar"><div class="perf-bar-fill" style="width:88%;background:linear-gradient(90deg,#a330c9,#e040e8);opacity:0.6;"></div></div>
+                <span class="perf-bar-val">94% ↑</span>
+              </div>
+            </div>
+            <div class="perf-stats">
+              <div class="perf-stat">
+                <div class="perf-stat-val" style="color:var(--heal);">3/3</div>
+                <div class="perf-stat-label">INTERRUPTS</div>
+              </div>
+              <div class="perf-stat">
+                <div class="perf-stat-val" style="color:var(--text-primary);">0</div>
+                <div class="perf-stat-label">DEATHS</div>
+              </div>
+              <div class="perf-stat">
+                <div class="perf-stat-val" style="color:var(--accent);">91%</div>
+                <div class="perf-stat-label">UPTIME</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Seraphine - Holy Priest -->
+          <div class="perf-row">
+            <div class="perf-player">
+              <div class="player-avatar" style="background:rgba(255,255,255,0.06);color:var(--priest);border-color:rgba(255,255,255,0.1);">HPR</div>
+              <div>
+                <div style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--priest);">Seraphine</div>
+                <div style="font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">Holy Priest</div>
+              </div>
+            </div>
+            <div class="perf-bar-section">
+              <div class="perf-bar-row">
+                <span class="perf-bar-label">HPS</span>
+                <div class="perf-bar"><div class="perf-bar-fill" style="width:92%;background:var(--heal);opacity:0.6;"></div></div>
+                <span class="perf-bar-val">311k</span>
+              </div>
+              <div class="perf-bar-row">
+                <span class="perf-bar-label">OVH</span>
+                <div class="perf-bar"><div class="perf-bar-fill" style="width:19%;background:var(--accent);opacity:0.5;"></div></div>
+                <span class="perf-bar-val">19%</span>
+              </div>
+            </div>
+            <div class="perf-stats">
+              <div class="perf-stat">
+                <div class="perf-stat-val" style="color:var(--text-muted);">0/0</div>
+                <div class="perf-stat-label">INTERRUPTS</div>
+              </div>
+              <div class="perf-stat">
+                <div class="perf-stat-val" style="color:var(--text-primary);">0</div>
+                <div class="perf-stat-label">DEATHS</div>
+              </div>
+              <div class="perf-stat">
+                <div class="perf-stat-val" style="color:var(--heal);">96%</div>
+                <div class="perf-stat-label">UPTIME</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Korryn - Assassination -->
+          <div class="perf-row">
+            <div class="perf-player">
+              <div class="player-avatar" style="background:rgba(255,245,105,0.08);color:var(--rogue);border-color:rgba(255,245,105,0.15);">ASN</div>
+              <div>
+                <div style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--rogue);">Korryn</div>
+                <div style="font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">Assassination Rogue</div>
+              </div>
+            </div>
+            <div class="perf-bar-section">
+              <div class="perf-bar-row">
+                <span class="perf-bar-label">DMG</span>
+                <div class="perf-bar"><div class="perf-bar-fill" style="width:78%;background:var(--rogue);opacity:0.6;"></div></div>
+                <span class="perf-bar-val">246k</span>
+              </div>
+              <div class="perf-bar-row">
+                <span class="perf-bar-label">CC</span>
+                <div class="perf-bar"><div class="perf-bar-fill" style="width:60%;background:var(--cc);opacity:0.5;"></div></div>
+                <span class="perf-bar-val">2 CCs</span>
+              </div>
+            </div>
+            <div class="perf-stats">
+              <div class="perf-stat">
+                <div class="perf-stat-val" style="color:var(--accent);">2/3</div>
+                <div class="perf-stat-label">INTERRUPTS</div>
+              </div>
+              <div class="perf-stat">
+                <div class="perf-stat-val" style="color:var(--text-primary);">0</div>
+                <div class="perf-stat-label">DEATHS</div>
+              </div>
+              <div class="perf-stat">
+                <div class="perf-stat-val" style="color:var(--accent);">88%</div>
+                <div class="perf-stat-label">UPTIME</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dravek - Ele Shaman -->
+          <div class="perf-row" style="border-color:rgba(232,64,64,0.2);">
+            <div class="perf-player">
+              <div class="player-avatar" style="background:rgba(0,112,222,0.12);color:var(--shaman);border-color:rgba(0,112,222,0.2);">ELE</div>
+              <div>
+                <div style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--shaman);">Dravek</div>
+                <div style="font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">Elemental Shaman</div>
+              </div>
+            </div>
+            <div class="perf-bar-section">
+              <div class="perf-bar-row">
+                <span class="perf-bar-label">DMG</span>
+                <div class="perf-bar"><div class="perf-bar-fill" style="width:100%;background:var(--shaman);opacity:0.7;"></div></div>
+                <span class="perf-bar-val">314k</span>
+              </div>
+              <div class="perf-bar-row">
+                <span class="perf-bar-label">CC</span>
+                <div class="perf-bar"><div class="perf-bar-fill" style="width:75%;background:var(--cc);opacity:0.5;"></div></div>
+                <span class="perf-bar-val">3 CCs</span>
+              </div>
+            </div>
+            <div class="perf-stats">
+              <div class="perf-stat">
+                <div class="perf-stat-val" style="color:var(--accent);">2/3</div>
+                <div class="perf-stat-label">INTERRUPTS</div>
+              </div>
+              <div class="perf-stat">
+                <div class="perf-stat-val" style="color:var(--death);">1</div>
+                <div class="perf-stat-label">DEATHS</div>
+              </div>
+              <div class="perf-stat">
+                <div class="perf-stat-val" style="color:var(--death);">71%</div>
+                <div class="perf-stat-label">UPTIME</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Valdris - Ret Paladin -->
+          <div class="perf-row" style="border-color:rgba(232,64,64,0.2);">
+            <div class="perf-player">
+              <div class="player-avatar" style="background:rgba(245,140,186,0.12);color:var(--paladin);border-color:rgba(245,140,186,0.2);">RET</div>
+              <div>
+                <div style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--paladin);">Valdris</div>
+                <div style="font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">Ret Paladin</div>
+              </div>
+            </div>
+            <div class="perf-bar-section">
+              <div class="perf-bar-row">
+                <span class="perf-bar-label">DMG</span>
+                <div class="perf-bar"><div class="perf-bar-fill" style="width:62%;background:var(--paladin);opacity:0.6;"></div></div>
+                <span class="perf-bar-val">196k</span>
+              </div>
+              <div class="perf-bar-row">
+                <span class="perf-bar-label">UTIL</span>
+                <div class="perf-bar"><div class="perf-bar-fill" style="width:40%;background:var(--accent);opacity:0.5;"></div></div>
+                <span class="perf-bar-val">Lay/BoP</span>
+              </div>
+            </div>
+            <div class="perf-stats">
+              <div class="perf-stat">
+                <div class="perf-stat-val" style="color:var(--text-muted);">0/0</div>
+                <div class="perf-stat-label">INTERRUPTS</div>
+              </div>
+              <div class="perf-stat">
+                <div class="perf-stat-val" style="color:var(--death);">1</div>
+                <div class="perf-stat-label">DEATHS</div>
+              </div>
+              <div class="perf-stat">
+                <div class="perf-stat-val" style="color:var(--death);">74%</div>
+                <div class="perf-stat-label">UPTIME</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="bottom-bar">
+    <div class="bottom-meta">CombatLedger v0.1.0 · Log: WoWCombatLog.txt · 14,382 events parsed · Sync: Companion v0.1.0</div>
+    <div class="bottom-actions">
+      <button class="action-btn">Export CSV</button>
+      <button class="action-btn">Share Link</button>
+      <button class="action-btn primary">⟳ Reload Data</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+    document.querySelector(`#tab-${name}`).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function toggleChip(el) {
+    el.classList.toggle('active');
+  }
+
+  function toggleDeath(card) {
+    card.classList.toggle('expanded');
+  }
+</script>
+</body>
+</html>
