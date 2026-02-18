@@ -94,3 +94,97 @@ end
 function Data:FormatTime(unixTs)
     return date("%H:%M", unixTs)
 end
+
+-- ---------------------------------------------------------------------------
+-- Phase 3 — Session selector (History tab sets activeSessionIndex)
+-- ---------------------------------------------------------------------------
+
+Data.activeSessionIndex = 1
+
+--- Set the active session by index (1 = most recent).
+function Data:SetActiveSession(index)
+    self.activeSessionIndex = index or 1
+end
+
+--- Returns the currently selected session (default: most recent).
+function Data:GetActiveSession()
+    return self:GetSession(self.activeSessionIndex or 1)
+end
+
+--- Returns total number of sessions in SavedVariables.
+function Data:GetSessionCount()
+    return #self:GetSessions()
+end
+
+-- ---------------------------------------------------------------------------
+-- Phase 3 — Trend accessors
+-- ---------------------------------------------------------------------------
+
+--- Returns the trend report table (populated after multiple pulls on same boss).
+function Data:GetTrend()
+    if not self.db then return {} end
+    return self.db.trends or {}
+end
+
+--- Returns the trend points array (chronological pull history).
+function Data:GetTrendPoints()
+    return self:GetTrend().points or {}
+end
+
+--- Returns the trend summary (totalPulls, kills, deathTrend, etc.).
+function Data:GetTrendSummary()
+    return self:GetTrend().summary or {}
+end
+
+-- ---------------------------------------------------------------------------
+-- Phase 3 — Distribution accessors
+-- ---------------------------------------------------------------------------
+
+--- Returns the distribution report table (percentile data for current session).
+function Data:GetDistribution()
+    if not self.db then return {} end
+    return self.db.distribution or {}
+end
+
+--- Returns the distribution players array.
+function Data:GetDistributionPlayers()
+    return self:GetDistribution().players or {}
+end
+
+--- Returns the percentile entry for a player+metric, or nil.
+function Data:GetPlayerPercentile(playerGUID, metric)
+    for _, dp in ipairs(self:GetDistributionPlayers()) do
+        if dp.playerGUID == playerGUID and dp.metric == metric then
+            return dp
+        end
+    end
+    return nil
+end
+
+-- ---------------------------------------------------------------------------
+-- Phase 3 — Formatting utilities
+-- ---------------------------------------------------------------------------
+
+--- Format a trend slope as a coloured arrow string.
+--- invertedBetter = true means a negative slope is an improvement (e.g. deaths).
+function Data:FormatTrend(val, invertedBetter)
+    if not val or val == 0 then
+        return "|cff888888→ stable|r"
+    end
+    local improving = invertedBetter and (val < 0) or (val > 0)
+    local arrow = improving and "↑" or "↓"
+    local color = improving and "40e87a" or "e84040"
+    return string.format("|cff%s%s %.1f|r", color, arrow, math.abs(val))
+end
+
+--- Format a percentile as a coloured "P80" badge.
+function Data:FormatPercentile(pct)
+    local color
+    if pct >= 90 then color = "e8a820"       -- gold  (exceptional)
+    elseif pct >= 75 then color = "40e87a"   -- green (good)
+    elseif pct >= 50 then color = "40b8e8"   -- blue  (average)
+    elseif pct >= 25 then color = "fe8040"   -- orange (below avg)
+    else color = "e84040"                     -- red   (poor)
+    end
+    return string.format("|cff%sP%d|r", color, math.floor(pct or 0))
+end

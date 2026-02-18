@@ -157,7 +157,7 @@ function Interrupts:Render(parent)
     end
     CL.Frame:HideEmptyState()
 
-    local session = CL.Data:GetLatestSession()
+    local session = CL.Data:GetActiveSession()
     local report  = CL.Data:GetInterrupts(session)
     local events  = report and report.interrupts or {}
 

@@ -243,7 +243,7 @@ function CC:Render(parent)
     end
     CL.Frame:HideEmptyState()
 
-    local session = CL.Data:GetLatestSession()
+    local session = CL.Data:GetActiveSession()
     local coverage = CL.Data:GetCCCoverage(session)
 
     if not coverage or #coverage == 0 then

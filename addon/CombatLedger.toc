@@ -21,4 +21,6 @@ tabs\Deaths.lua
 tabs\Interrupts.lua
 tabs\CC.lua
 tabs\Performance.lua
+tabs\History.lua
+tabs\Trends.lua
 CombatLedger.lua

@@ -207,7 +207,7 @@ function Deaths:Render(parent)
     end
     CL.Frame:HideEmptyState()
 
-    local session = CL.Data:GetLatestSession()
+    local session = CL.Data:GetActiveSession()
     local deaths = CL.Data:GetDeaths(session)
 
     if #deaths == 0 then

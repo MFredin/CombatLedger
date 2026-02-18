@@ -28,7 +28,7 @@ function Overview:Render(parent)
     end
     CL.Frame:HideEmptyState()
 
-    local session = CL.Data:GetLatestSession()
+    local session = CL.Data:GetActiveSession()
     if not session then return end
 
     self.frame = CreateFrame("Frame", nil, parent)

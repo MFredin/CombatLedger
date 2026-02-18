@@ -54,6 +54,7 @@ local COLS = {
     { x = 384, w =  60, text = "Interrupts",  key = "interruptCount"},
     { x = 448, w =  50, text = "Deaths",      key = "deathCount"    },
     { x = 502, w =  60, text = "CC Applied",  key = "ccApplied"     },
+    { x = 566, w =  60, text = "Rank",        key = nil             },  -- Phase 3 percentile
 }
 
 local function buildHeader(parent, yOffset)
@@ -158,6 +159,20 @@ local function buildPlayerRow(parent, p, yOffset, rowIndex)
     else
         ccFs:SetText("|cff5555550|r")
     end
+
+    -- Rank — DPS percentile badge from Phase 3 distribution data
+    local rankFs = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    rankFs:SetWidth(60)
+    rankFs:SetPoint("LEFT", row, "LEFT", 566, 0)
+    local dpsDist = CL.Data:GetPlayerPercentile(p.playerGUID, "dps")
+    local hpsDist = CL.Data:GetPlayerPercentile(p.playerGUID, "hps")
+    if dpsDist and dpsDist.totalSamples and dpsDist.totalSamples > 1 then
+        rankFs:SetText(CL.Data:FormatPercentile(dpsDist.percentile))
+    elseif hpsDist and hpsDist.totalSamples and hpsDist.totalSamples > 1 then
+        rankFs:SetText(CL.Data:FormatPercentile(hpsDist.percentile))
+    else
+        rankFs:SetText("|cff555555—|r")
+    end
 end
 
 -- ---------------------------------------------------------------------------
@@ -230,7 +245,7 @@ function Performance:Render(parent)
     end
     CL.Frame:HideEmptyState()
 
-    local session = CL.Data:GetLatestSession()
+    local session = CL.Data:GetActiveSession()
     local perf = CL.Data:GetPerformance(session)
     local defensiveAudit = CL.Data:GetDefensiveAudit(session)
 
