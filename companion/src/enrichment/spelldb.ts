@@ -92,7 +92,39 @@ const _raidFileModules = import.meta.glob(
   { eager: true, import: "default" },
 );
 
-const _db: SpellDatabase = baseDbRaw as unknown as SpellDatabase;
+// Individual dungeon spell files (one per dungeon key, e.g. darkflame-cleft.json).
+// Merged over the inline base.json dungeon entries — file data takes precedence.
+const _dungeonFileModules = import.meta.glob(
+  "../../../data/spells/dungeons/*.json",
+  { eager: true, import: "default" },
+);
+
+function buildDungeonDb(): Record<string, Record<string, EnemySpell>> {
+  const merged: Record<string, Record<string, EnemySpell>> = {};
+  for (const [path, mod] of Object.entries(_dungeonFileModules)) {
+    // Derive dungeon key from filename: ".../darkflame-cleft.json" → "darkflame-cleft"
+    const key = path.split("/").pop()?.replace(".json", "") ?? "";
+    const data = mod as { spells?: Record<string, EnemySpell> };
+    if (key && data.spells) {
+      merged[key] = data.spells;
+    }
+  }
+  return merged;
+}
+
+const _dungeonDb = buildDungeonDb();
+
+// Merge individual dungeon files over inline base.json entries.
+const _rawDb = baseDbRaw as unknown as SpellDatabase;
+const _db: SpellDatabase = {
+  ..._rawDb,
+  enemySpells: {
+    dungeons: {
+      ..._rawDb.enemySpells.dungeons,
+      ..._dungeonDb,
+    },
+  },
+};
 
 function buildRaidDb(): RaidDatabase {
   const merged: RaidDatabase = { encounters: {}, externalDefensives: {} };

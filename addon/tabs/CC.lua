@@ -78,7 +78,7 @@ local function buildLegend(parent, yOffset)
 
         local lbl = legendFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         lbl:SetPoint("LEFT", legendFrame, "LEFT", x, 0)
-        lbl:SetText("|cff888888" .. e.label .. "|r")
+        lbl:SetText("|cff6b7a9a" .. e.label .. "|r")
         lbl:SetWidth(64)
         x = x + 68
     end
@@ -108,7 +108,7 @@ local function buildFilterToggle(parent, yOffset, onToggle)
         if filterProblems then
             lbl:SetText("|cfffe8040⚠ Problem targets only|r")
         else
-            lbl:SetText("|cff888888Show: All targets|r")
+            lbl:SetText("|cff6b7a9aShow: All targets|r")
         end
     end
     refresh()
@@ -266,7 +266,7 @@ function CC:Render(parent)
     -- Encounter header
     local hdr = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     hdr:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -8)
-    hdr:SetFormattedText("|cffe8a820%s|r  |cff888888Pull #%d — %s — %d target(s)|r",
+    hdr:SetFormattedText("|cffe8a820%s|r  |cff6b7a9aPull #%d — %s — %d target(s)|r",
         session.encounterName or "Unknown",
         session.pullNumber or 0,
         session.success and "Success" or "Wipe",

@@ -22,7 +22,7 @@ local C = CL.Config.colours
 local function classColour(cls)
     local cc = CL.Config.classColours[cls]
     if cc then return cc.r, cc.g, cc.b end
-    return 0.8, 0.8, 0.8
+    return C.textPrimary.r, C.textPrimary.g, C.textPrimary.b
 end
 
 local function setBg(f, r, g, b, a)
@@ -69,7 +69,7 @@ local function buildDeathCard(parent, death, yOffset)
     local headerLabel = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     headerLabel:SetPoint("LEFT", header, "LEFT", 12, 0)
     headerLabel:SetFormattedText(
-        "|cff%02x%02x%02x[%s] %s|r  |cff888888Pull #%d — %s in|r",
+        "|cff%02x%02x%02x[%s] %s|r  |cff6b7a9aPull #%d — %s in|r",
         cr * 255, cg * 255, cb * 255,
         specAbbr, death.playerName,
         death.pullNumber,
@@ -149,7 +149,7 @@ local function buildDeathCard(parent, death, yOffset)
         local hp = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         hp:SetWidth(60)
         hp:SetPoint("LEFT", row, "LEFT", 390, 0)
-        hp:SetFormattedText("|cff888888%d%%|r", ev.estimatedHpAfter)
+        hp:SetFormattedText("|cff6b7a9a%d%%|r", ev.estimatedHpAfter)
 
         totalH = totalH + ROW_H
         table.insert(rows, row)
@@ -227,7 +227,7 @@ function Deaths:Render(parent)
     -- Encounter header
     local hdr = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     hdr:SetPoint("TOPLEFT", content, "TOPLEFT", 16, -8)
-    hdr:SetFormattedText("|cffe8a820%s|r  |cff888888Pull #%d — %s — %d death(s)|r",
+    hdr:SetFormattedText("|cffe8a820%s|r  |cff6b7a9aPull #%d — %s — %d death(s)|r",
         session.encounterName,
         session.pullNumber,
         session.success and "Success" or "Wipe",

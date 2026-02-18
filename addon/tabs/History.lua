@@ -108,7 +108,7 @@ local function buildSessionRow(parent, session, index, yOffset, onSelect, rowBut
     local idxFs = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     idxFs:SetWidth(28)
     idxFs:SetPoint("LEFT", row, "LEFT", 8, 0)
-    idxFs:SetTextColor(0.5, 0.5, 0.5)
+    idxFs:SetTextColor(C.textMuted.r, C.textMuted.g, C.textMuted.b)
     idxFs:SetText(tostring(index))
 
     -- Boss name
@@ -121,7 +121,7 @@ local function buildSessionRow(parent, session, index, yOffset, onSelect, rowBut
     local diffFs = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     diffFs:SetWidth(80)
     diffFs:SetPoint("LEFT", row, "LEFT", 244, 0)
-    diffFs:SetText("|cff888888" .. difficultyLabel(session.difficulty) .. "|r")
+    diffFs:SetText("|cff6b7a9a" .. difficultyLabel(session.difficulty) .. "|r")
 
     -- Duration
     local durFs = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -165,7 +165,7 @@ local function buildSessionRow(parent, session, index, yOffset, onSelect, rowBut
     local dateFs = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     dateFs:SetWidth(120)
     dateFs:SetPoint("LEFT", row, "LEFT", 624, 0)
-    dateFs:SetTextColor(0.5, 0.5, 0.5)
+    dateFs:SetTextColor(C.textMuted.r, C.textMuted.g, C.textMuted.b)
     if session.startTime and session.startTime > 0 then
         dateFs:SetText(date("%m/%d %H:%M", session.startTime))
     end
@@ -228,8 +228,8 @@ function History:Render(parent)
     local banner = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     banner:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -8)
     banner:SetFormattedText(
-        "|cffe8a820%d sessions|r  |cff888888stored in SavedVariables|r  " ..
-        "  |cff888888Active: Pull #%d (%s)|r",
+        "|cffe8a820%d sessions|r  |cff6b7a9astored in SavedVariables|r  " ..
+        "  |cff6b7a9aActive: Pull #%d (%s)|r",
         #sessions,
         CL.Data.activeSessionIndex,
         (sessions[CL.Data.activeSessionIndex] or {}).encounterName or "?"
@@ -257,8 +257,8 @@ function History:Render(parent)
         CL.Data:SetActiveSession(idx)
         -- Refresh banner
         banner:SetFormattedText(
-            "|cffe8a820%d sessions|r  |cff888888stored in SavedVariables|r" ..
-            "  |cff888888Active: Pull #%d (%s)|r",
+            "|cffe8a820%d sessions|r  |cff6b7a9astored in SavedVariables|r" ..
+            "  |cff6b7a9aActive: Pull #%d (%s)|r",
             #sessions,
             idx,
             (sessions[idx] or {}).encounterName or "?"

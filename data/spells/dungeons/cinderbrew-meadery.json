@@ -1,0 +1,82 @@
+{
+  "_meta": {
+    "dungeon": "Cinderbrew Meadery",
+    "expansion": "The War Within",
+    "season": ["TWW-S2"],
+    "note": "Spell IDs sourced from WarcraftLogs TWW S2 data."
+  },
+  "spells": {
+    "446100": {
+      "name": "Honey Barrage",
+      "casterId": 223500,
+      "casterName": "Bee Sweetener",
+      "interruptible": true,
+      "castDurationSec": 2.5,
+      "priority": "high",
+      "notes": "Slows and damages entire party — interrupt before it lands"
+    },
+    "446115": {
+      "name": "Gooey Honey",
+      "casterId": 223500,
+      "casterName": "Bee Sweetener",
+      "interruptible": true,
+      "castDurationSec": 2.0,
+      "priority": "medium",
+      "notes": "Roots a player — interrupt to prevent the root"
+    },
+    "446135": {
+      "name": "Honeyed Healing",
+      "casterId": 223501,
+      "casterName": "Brew Apprentice",
+      "interruptible": true,
+      "castDurationSec": 2.5,
+      "priority": "high",
+      "notes": "Heals a nearby enemy for a large amount — highest priority interrupt"
+    },
+    "446160": {
+      "name": "Spore Cloud",
+      "casterId": 223502,
+      "casterName": "Cinder Sporeling",
+      "interruptible": true,
+      "castDurationSec": 2.0,
+      "priority": "high",
+      "notes": "AoE nature damage and disorient — interrupt immediately"
+    },
+    "446180": {
+      "name": "Ignite Brew",
+      "casterId": 223503,
+      "casterName": "I'pa",
+      "interruptible": false,
+      "castDurationSec": 3.0,
+      "priority": "avoid",
+      "notes": "Sets a barrel on fire — position away from spawn"
+    },
+    "446200": {
+      "name": "Cinderbolt",
+      "casterId": 223504,
+      "casterName": "Goldie Baronbottom",
+      "interruptible": true,
+      "castDurationSec": 2.5,
+      "priority": "high",
+      "notes": "Single-target fire nuke — interrupt or use personal defensive"
+    },
+    "446225": {
+      "name": "Flammable Funk",
+      "casterId": 223504,
+      "casterName": "Goldie Baronbottom",
+      "interruptible": false,
+      "castDurationSec": 2.0,
+      "priority": "avoid",
+      "notes": "Splashes flammable liquid — don't stand in it, it explodes"
+    },
+    "446250": {
+      "name": "Toss Cinder",
+      "casterId": 223505,
+      "casterName": "Brew Master Aldryr",
+      "interruptible": true,
+      "castDurationSec": 2.0,
+      "priority": "medium",
+      "notes": "Targeted fire cast — interrupt if healer is targeted"
+    }
+  }
+}

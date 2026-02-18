@@ -180,7 +180,7 @@ function Interrupts:Render(parent)
     local sumLine = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     sumLine:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -8)
     sumLine:SetFormattedText(
-        "Interrupted: |cff40b8e8%d|r / |cff888888%d|r  (|cff%02x%02x%02x%d%%|r)",
+        "Interrupted: |cff40b8e8%d|r / |cff6b7a9a%d|r  (|cff%02x%02x%02x%d%%|r)",
         summary.intercepted or 0,
         summary.total or 0,
         summary.ratePercent >= 80 and 64 or 232,

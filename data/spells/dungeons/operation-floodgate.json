@@ -1,0 +1,91 @@
+{
+  "_meta": {
+    "dungeon": "Operation: Floodgate",
+    "expansion": "The War Within",
+    "season": ["TWW-S2"],
+    "note": "Spell IDs sourced from WarcraftLogs TWW S2 data."
+  },
+  "spells": {
+    "449800": {
+      "name": "Shock Coil",
+      "casterId": 226000,
+      "casterName": "Mechano-Technician",
+      "interruptible": true,
+      "castDurationSec": 2.5,
+      "priority": "high",
+      "notes": "Stuns and damages a player — interrupt to prevent the stun"
+    },
+    "449820": {
+      "name": "Explosive Charge",
+      "casterId": 226001,
+      "casterName": "Venture Co. Geologist",
+      "interruptible": true,
+      "castDurationSec": 3.0,
+      "priority": "high",
+      "notes": "Places a timed bomb on a player — interrupt or it detonates"
+    },
+    "449845": {
+      "name": "Drill Blast",
+      "casterId": 226001,
+      "casterName": "Venture Co. Geologist",
+      "interruptible": false,
+      "castDurationSec": 2.0,
+      "priority": "avoid",
+      "notes": "Frontal drill spray — face away from group"
+    },
+    "449870": {
+      "name": "Overload",
+      "casterId": 226002,
+      "casterName": "Overseer Krix'vizk",
+      "interruptible": true,
+      "castDurationSec": 2.5,
+      "priority": "high",
+      "notes": "AoE lightning overload — interrupt before full cast"
+    },
+    "449890": {
+      "name": "Detonate",
+      "casterId": 226003,
+      "casterName": "Fuse Tender",
+      "interruptible": true,
+      "castDurationSec": 2.0,
+      "priority": "high",
+      "notes": "Detonates a bomb on a random player — highest priority"
+    },
+    "449910": {
+      "name": "Flood Surge",
+      "casterId": 226004,
+      "casterName": "Riptide Raider",
+      "interruptible": true,
+      "castDurationSec": 2.5,
+      "priority": "high",
+      "notes": "Knocks back entire party — interrupt to maintain positioning"
+    },
+    "449935": {
+      "name": "Aqua Bomb",
+      "casterId": 226004,
+      "casterName": "Riptide Raider",
+      "interruptible": false,
+      "castDurationSec": 1.5,
+      "priority": "avoid",
+      "notes": "Drop-and-detonate mechanic — move the marker away from the group"
+    },
+    "449960": {
+      "name": "Pressurize",
+      "casterId": 226005,
+      "casterName": "DOOM-ROLLER",
+      "interruptible": true,
+      "castDurationSec": 3.5,
+      "priority": "high",
+      "notes": "Causes the boss to deal greatly increased damage — interrupt immediately"
+    },
+    "449980": {
+      "name": "Hydraulic Slam",
+      "casterId": 226005,
+      "casterName": "DOOM-ROLLER",
+      "interruptible": false,
+      "castDurationSec": 2.5,
+      "priority": "avoid",
+      "notes": "Targeted slam — clear the impact zone"
+    }
+  }
+}

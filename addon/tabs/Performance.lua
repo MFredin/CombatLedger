@@ -29,7 +29,7 @@ end
 local function classColour(cls)
     local cc = CL.Config.classColours[cls]
     if cc then return cc.r, cc.g, cc.b end
-    return 0.8, 0.8, 0.8
+    return C.textPrimary.r, C.textPrimary.g, C.textPrimary.b
 end
 
 local function formatBigNum(n)
@@ -100,7 +100,7 @@ local function buildPlayerRow(parent, p, yOffset, rowIndex)
     local specFs = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     specFs:SetWidth(80)
     specFs:SetPoint("LEFT", row, "LEFT", 132, 0)
-    specFs:SetText("|cff888888" .. (p.playerSpec or "???"):sub(1, 6) .. "|r")
+    specFs:SetText("|cff6b7a9a" .. (p.playerSpec or "???"):sub(1, 6) .. "|r")
 
     -- DPS (red tint = damage dealer)
     local dpsFs = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -191,7 +191,7 @@ local function buildDefensiveSection(content, defensiveAudit, yOffset)
 
     local subHdr = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     subHdr:SetPoint("TOPLEFT", content, "TOPLEFT", 8, yOffset)
-    subHdr:SetText("|cff888888Missed defensive at time of death|r")
+    subHdr:SetText("|cff6b7a9aMissed defensive at time of death|r")
     yOffset = yOffset - 20
 
     local hasAny = false
@@ -282,7 +282,7 @@ function Performance:Render(parent)
     local hdr = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     hdr:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -8)
     hdr:SetFormattedText(
-        "|cffe8a820%s|r  |cff888888Pull #%d — %s — %ds|r",
+        "|cffe8a820%s|r  |cff6b7a9aPull #%d — %s — %ds|r",
         session.encounterName or "Unknown",
         session.pullNumber or 0,
         session.success and "Success" or "Wipe",

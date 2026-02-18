@@ -111,7 +111,7 @@ local function buildSummaryBanner(parent, trend, yStart)
     local titleFs = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     titleFs:SetPoint("TOPLEFT", parent, "TOPLEFT", 8, y)
     titleFs:SetFormattedText(
-        "|cffe8a820%s|r  |cff888888%d pulls  ·  %d kills  ·  best %s|r",
+        "|cffe8a820%s|r  |cff6b7a9a%d pulls  ·  %d kills  ·  best %s|r",
         trend.encounterName or "Unknown Boss",
         summary.totalPulls or 0,
         summary.kills or 0,
@@ -124,7 +124,7 @@ local function buildSummaryBanner(parent, trend, yStart)
     arrowLine:SetPoint("TOPLEFT", parent, "TOPLEFT", 8, y)
     arrowLine:SetFormattedText(
         "Deaths %s   Interrupts %s   DPS %s   " ..
-        "|cff888888Avg deaths: %.1f  ·  Avg int: %.0f%%|r",
+        "|cff6b7a9aAvg deaths: %.1f  ·  Avg int: %.0f%%|r",
         CL.Data:FormatTrend(summary.deathTrend, true),   -- inverted: fewer = better
         CL.Data:FormatTrend(summary.interruptTrend, false),
         CL.Data:FormatTrend(summary.dpsTrend, false),
@@ -211,7 +211,7 @@ local function buildMetricSection(parent, metricDef, points, yOffset)
             local lx = 8 + math.floor((i - 1) * stepX)
             local labelFs = chartFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             labelFs:SetPoint("TOPLEFT", chartFrame, "TOPLEFT", lx - 8, -(CHART_H + 4))
-            labelFs:SetTextColor(0.45, 0.45, 0.45)
+            labelFs:SetTextColor(C.textMuted.r, C.textMuted.g, C.textMuted.b)
             labelFs:SetText(tostring(pt.pullNumber))
         end
     end
@@ -275,7 +275,7 @@ local function buildDistributionSection(content, yOffset)
 
     local subHdr = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     subHdr:SetPoint("TOPLEFT", content, "TOPLEFT", 8, yOffset)
-    subHdr:SetText("|cff888888Gold = exceptional  Green = good  Blue = average  Red = poor|r")
+    subHdr:SetText("|cff6b7a9aGold = exceptional  Green = good  Blue = average  Red = poor|r")
     yOffset = yOffset - 20
 
     -- Group by player, show dps/hps/interrupts in one line
@@ -294,7 +294,7 @@ local function buildDistributionSection(content, yOffset)
         local dpsEntry = metrics["dps"]
         local hpsEntry = metrics["hps"]
         local intEntry = metrics["interrupts"]
-        local classColor = "888888"
+        local classColor = "6b7a9a"
         if dpsEntry then
             local cc = CL.Config.classColours[dpsEntry.playerClass]
             if cc then
@@ -320,7 +320,7 @@ local function buildDistributionSection(content, yOffset)
             dpsFs:SetWidth(80)
             dpsFs:SetPoint("LEFT", row, "LEFT", 124, 0)
             dpsFs:SetText("DPS " .. CL.Data:FormatPercentile(dpsEntry.percentile)
-                .. string.format("|cff888888 (%d pulls)|r", dpsEntry.totalSamples))
+                .. string.format("|cff6b7a9a (%d pulls)|r", dpsEntry.totalSamples))
         end
 
         -- HPS percentile

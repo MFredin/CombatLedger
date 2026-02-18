@@ -1,0 +1,82 @@
+{
+  "_meta": {
+    "dungeon": "The Rookery",
+    "expansion": "The War Within",
+    "season": ["TWW-S2"],
+    "note": "Spell IDs sourced from WarcraftLogs TWW S2 data. Verify cast durations against live logs."
+  },
+  "spells": {
+    "448200": {
+      "name": "Storm Bolt",
+      "casterId": 225100,
+      "casterName": "Stormrider Kyrel",
+      "interruptible": true,
+      "castDurationSec": 2.0,
+      "priority": "high",
+      "notes": "Lightning bolt dealing heavy damage to the tank — interrupt when possible"
+    },
+    "448220": {
+      "name": "Arcing Voltage",
+      "casterId": 225101,
+      "casterName": "Void-Touched Egg",
+      "interruptible": true,
+      "castDurationSec": 2.5,
+      "priority": "high",
+      "notes": "AoE chain lightning — interrupt to prevent party-wide damage"
+    },
+    "448250": {
+      "name": "Crackling Burst",
+      "casterId": 225101,
+      "casterName": "Void-Touched Egg",
+      "interruptible": false,
+      "castDurationSec": 1.5,
+      "priority": "avoid",
+      "notes": "Small AoE burst when egg is fully charged — CC or burst egg down"
+    },
+    "448270": {
+      "name": "Thunder Crash",
+      "casterId": 225102,
+      "casterName": "Kyrioss",
+      "interruptible": false,
+      "castDurationSec": 3.0,
+      "priority": "avoid",
+      "notes": "Targeted drop — don't stack under boss impact"
+    },
+    "448295": {
+      "name": "Stormbolt Barrage",
+      "casterId": 225103,
+      "casterName": "Stormrider Nyrele",
+      "interruptible": true,
+      "castDurationSec": 2.0,
+      "priority": "high",
+      "notes": "Rapid cast sequence — interrupt the first cast to cancel the channel"
+    },
+    "448320": {
+      "name": "Void Corruption",
+      "casterId": 225104,
+      "casterName": "Prototype Stormrider",
+      "interruptible": true,
+      "castDurationSec": 2.5,
+      "priority": "high",
+      "notes": "Applies void DoT to entire party — top-priority interrupt on trash"
+    },
+    "448345": {
+      "name": "Lightning Shield",
+      "casterId": 225104,
+      "casterName": "Prototype Stormrider",
+      "interruptible": true,
+      "castDurationSec": 3.0,
+      "priority": "medium",
+      "notes": "Buffs caster with lightning reflection — interrupt to prevent shield"
+    },
+    "448370": {
+      "name": "Galvanic Slash",
+      "casterId": 225105,
+      "casterName": "Voidstone Monstrosity",
+      "interruptible": false,
+      "castDurationSec": 2.0,
+      "priority": "avoid",
+      "notes": "Frontal cleave — face away from group"
+    }
+  }
+}
