@@ -1,11 +1,13 @@
 // Prevents an additional console window on Windows in release builds.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod database;
 mod paths;
 mod watcher;
 mod writer;
 
 use anyhow::Result;
+use database::{Database, DistributionReport, EncounterOption, SessionInsert, SessionSummary, TrendReport};
 use paths::WowPaths;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -45,7 +47,7 @@ pub struct AppState {
 type SharedState = Arc<Mutex<AppState>>;
 
 // ---------------------------------------------------------------------------
-// Tauri commands (called from the TypeScript / WebView front-end)
+// Tauri commands — existing
 // ---------------------------------------------------------------------------
 
 #[tauri::command]
@@ -119,6 +121,62 @@ async fn write_session(
 }
 
 // ---------------------------------------------------------------------------
+// Tauri commands — Phase 3 SQLite
+// ---------------------------------------------------------------------------
+
+/// Store a parsed session to SQLite and return the new session DB row id.
+#[tauri::command]
+async fn store_session(
+    session: SessionInsert,
+    db: State<'_, Database>,
+) -> Result<i64, String> {
+    db.insert_session(session).map_err(|e| e.to_string())
+}
+
+/// Paginated session history browser, optionally filtered by encounter/difficulty.
+#[tauri::command]
+async fn get_session_history(
+    encounter_id: Option<i64>,
+    difficulty: Option<i64>,
+    limit: i64,
+    offset: i64,
+    db: State<'_, Database>,
+) -> Result<Vec<SessionSummary>, String> {
+    db.get_session_history(encounter_id, difficulty, limit, offset)
+        .map_err(|e| e.to_string())
+}
+
+/// Pull-over-pull trend data for the last N sessions on a given encounter.
+#[tauri::command]
+async fn get_trend(
+    encounter_id: i64,
+    difficulty: i64,
+    last_n: i64,
+    db: State<'_, Database>,
+) -> Result<TrendReport, String> {
+    db.get_trend(encounter_id, difficulty, last_n)
+        .map_err(|e| e.to_string())
+}
+
+/// Percentile distribution for each player in the given session.
+#[tauri::command]
+async fn get_distribution(
+    encounter_id: i64,
+    difficulty: i64,
+    current_session_id: i64,
+    db: State<'_, Database>,
+) -> Result<DistributionReport, String> {
+    db.get_distribution(encounter_id, difficulty, current_session_id)
+        .map_err(|e| e.to_string())
+}
+
+/// List all distinct encounters in the database (for UI dropdowns).
+#[tauri::command]
+async fn get_encounters(db: State<'_, Database>) -> Result<Vec<EncounterOption>, String> {
+    db.get_encounters().map_err(|e| e.to_string())
+}
+
+// ---------------------------------------------------------------------------
 // Main entry point
 // ---------------------------------------------------------------------------
 
@@ -128,6 +186,20 @@ fn main() {
     tauri::Builder::default()
         .manage(shared_state.clone())
         .setup(move |app| {
+            // Initialise SQLite database in the Tauri app-data directory.
+            let db_path = app
+                .path()
+                .app_data_dir()
+                .expect("Failed to resolve app data dir")
+                .join("combatledger.db");
+
+            if let Some(parent) = db_path.parent() {
+                std::fs::create_dir_all(parent).ok();
+            }
+
+            let database = Database::new(db_path).expect("Failed to open SQLite database");
+            app.manage(database);
+
             let handle = app.handle().clone();
             let state_clone = shared_state.clone();
 
@@ -221,6 +293,11 @@ fn main() {
             set_wow_root,
             list_accounts,
             write_session,
+            store_session,
+            get_session_history,
+            get_trend,
+            get_distribution,
+            get_encounters,
         ])
         .run(tauri::generate_context!())
         .expect("error while running CombatLedger companion");
