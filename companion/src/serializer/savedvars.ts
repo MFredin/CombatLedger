@@ -171,6 +171,13 @@ function defensiveAuditToLuaValue(audit: DefensiveAuditReport): LuaValue {
         cooldownSec: m.cooldownSec,
         secSinceLastUse: m.secSinceLastUse ?? null,
       })) as LuaValue[],
+      missedExternals: (p.missedExternals ?? []).map((me) => ({
+        casterName: me.casterName,
+        spellId: me.spellId,
+        spellName: me.spellName,
+        cooldownSec: me.cooldownSec,
+        secSinceLastUse: me.secSinceLastUse ?? null,
+      })) as LuaValue[],
     })) as LuaValue[],
   };
 }

@@ -215,6 +215,20 @@ local function buildDefensiveSection(content, defensiveAudit, yOffset)
                 missedLabel:SetFormattedText("|cfffe8040⚠ %s %s|r", missed.spellName, sinceStr)
                 yOffset = yOffset - 16
             end
+
+            -- Phase 3.5: missed external defensives (e.g. Ironbark available but unused)
+            for _, ext in ipairs(playerAudit.missedExternals or {}) do
+                local extLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                extLabel:SetPoint("TOPLEFT", content, "TOPLEFT", 20, yOffset)
+                local sinceStr = ext.secSinceLastUse
+                    and string.format("(last cast %.0fs ago)", ext.secSinceLastUse)
+                    or "(never used)"
+                extLabel:SetFormattedText(
+                    "|cff40b8e8⟳ %s from %s was available %s|r",
+                    ext.spellName, ext.casterName, sinceStr
+                )
+                yOffset = yOffset - 16
+            end
             yOffset = yOffset - 4
         end
     end
