@@ -1,17 +1,12 @@
 /**
  * spelldb.ts — Spell metadata lookup
  *
- * Loads data/spells/base.json, dungeon-specific JSON files, and Phase 3.5
- * raid spell data from data/spells/raids/*.json.
- * Provides fast O(1) lookups by spell ID.
+ * Data is loaded via Vite static imports (import.meta.glob) so this module
+ * works in both the Tauri WebView (no Node.js fs available) and in Vitest.
+ * All JSON is bundled at build time — no runtime filesystem access needed.
  */
 
-import { readFileSync, readdirSync } from "fs";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = join(__dirname, "../../data");
+/// <reference types="vite/client" />
 
 export interface PlayerSpell {
   name: string;
@@ -82,62 +77,59 @@ interface RaidDatabase {
   externalDefensives: Record<string, ExternalDefensive>;
 }
 
-let _db: SpellDatabase | null = null;
-let _raidDb: RaidDatabase | null = null;
+// ---------------------------------------------------------------------------
+// Static data loading via Vite bundler (works in WebView + Vitest)
+// ---------------------------------------------------------------------------
 
-function loadDb(): SpellDatabase {
-  if (_db) return _db;
-  const raw = readFileSync(join(DATA_DIR, "spells/base.json"), "utf-8");
-  _db = JSON.parse(raw) as SpellDatabase;
-  return _db;
-}
+// Base spell database — bundled at build time.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+import baseDbRaw from "../../../data/spells/base.json" with { type: "json" };
 
-function loadRaidDb(): RaidDatabase {
-  if (_raidDb) return _raidDb;
+// All raid JSON files discovered and bundled at build time.
+// import.meta.glob is a Vite/Vitest feature resolved at build time.
+const _raidFileModules = import.meta.glob(
+  "../../../data/spells/raids/*.json",
+  { eager: true, import: "default" },
+);
 
+const _db: SpellDatabase = baseDbRaw as unknown as SpellDatabase;
+
+function buildRaidDb(): RaidDatabase {
   const merged: RaidDatabase = { encounters: {}, externalDefensives: {} };
-  const raidsDir = join(DATA_DIR, "spells/raids");
-
-  try {
-    const files = readdirSync(raidsDir).filter((f) => f.endsWith(".json"));
-    for (const file of files) {
-      const raw = readFileSync(join(raidsDir, file), "utf-8");
-      const data = JSON.parse(raw);
-      Object.assign(merged.encounters, data.encounters ?? {});
-      Object.assign(merged.externalDefensives, data.externalDefensives ?? {});
-    }
-  } catch {
-    // Raids directory absent — silently proceed without raid data.
+  for (const mod of Object.values(_raidFileModules)) {
+    const data = mod as { encounters?: Record<string, RaidEncounter>; externalDefensives?: Record<string, ExternalDefensive> };
+    Object.assign(merged.encounters, data.encounters ?? {});
+    Object.assign(merged.externalDefensives, data.externalDefensives ?? {});
   }
-
-  _raidDb = merged;
-  return _raidDb;
+  return merged;
 }
+
+const _raidDb: RaidDatabase = buildRaidDb();
 
 // ---------------------------------------------------------------------------
 // Dungeon / base spell lookups
 // ---------------------------------------------------------------------------
 
 export function getPlayerSpell(spellId: number): PlayerSpell | undefined {
-  return loadDb().spells[String(spellId)];
+  return _db.spells[String(spellId)];
 }
 
 export function getEnemySpell(
   dungeon: string,
   spellId: number
 ): EnemySpell | undefined {
-  return loadDb().enemySpells.dungeons[dungeon]?.[String(spellId)];
+  return _db.enemySpells.dungeons[dungeon]?.[String(spellId)];
 }
 
 export function getDefensives(
   cls: string,
   spec: string
 ): DefensiveSpell[] {
-  return loadDb().defensives[cls]?.[spec] ?? [];
+  return _db.defensives[cls]?.[spec] ?? [];
 }
 
 export function getDrCategories(): Record<string, DrCategory> {
-  return loadDb().drCategories;
+  return _db.drCategories;
 }
 
 /** Return the DR category name for a given spell ID, or undefined. */
@@ -160,7 +152,7 @@ export function isInterruptible(dungeon: string, spellId: number): boolean {
 
 /** Return raid encounter metadata by encounter ID, or undefined. */
 export function getRaidEncounter(encounterId: number): RaidEncounter | undefined {
-  return loadRaidDb().encounters[String(encounterId)];
+  return _raidDb.encounters[String(encounterId)];
 }
 
 /** Return all interruptible spells for a raid encounter. */
@@ -172,12 +164,12 @@ export function getRaidInterruptibleSpells(
 
 /** Return external defensive metadata by spell ID, or undefined. */
 export function getExternalDefensive(spellId: number): ExternalDefensive | undefined {
-  return loadRaidDb().externalDefensives[String(spellId)];
+  return _raidDb.externalDefensives[String(spellId)];
 }
 
 /** Return all external defensive spell IDs. */
 export function getAllExternalDefensiveIds(): number[] {
-  return Object.keys(loadRaidDb().externalDefensives).map(Number);
+  return Object.keys(_raidDb.externalDefensives).map(Number);
 }
 
 /** True if a spell ID is a known external defensive applied to another player. */

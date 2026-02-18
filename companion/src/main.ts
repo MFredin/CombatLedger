@@ -25,7 +25,7 @@ async function onSessionComplete(luaContent: string): Promise<void> {
 async function main(): Promise<void> {
   // Listen for batches of new log lines from the Rust watcher.
   await listen<string[]>("log-lines", async (event) => {
-    const outputs = orchestrator.processLines(event.payload);
+    const outputs = await orchestrator.processLines(event.payload);
     for (const output of outputs) {
       await onSessionComplete(output.luaContent);
     }

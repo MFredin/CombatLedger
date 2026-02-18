@@ -184,6 +184,11 @@ fn main() {
     let shared_state: SharedState = Arc::new(Mutex::new(AppState::default()));
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec!["--minimized"]),
+        ))
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(shared_state.clone())
         .setup(move |app| {
             // Initialise SQLite database in the Tauri app-data directory.
