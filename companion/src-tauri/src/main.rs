@@ -271,8 +271,55 @@ async fn get_activity_log(
 }
 
 // ---------------------------------------------------------------------------
-// Main entry point
+// Tauri commands — auto-updater
 // ---------------------------------------------------------------------------
+
+/// Returned to the frontend when a newer version is available.
+#[derive(Debug, Clone, Serialize)]
+struct UpdateInfo {
+    version: String,
+    notes: String,
+}
+
+/// Check GitHub for a newer release.  Returns `None` when already up-to-date.
+/// Silent network failures are propagated as `Err` so the caller can ignore them.
+#[tauri::command]
+async fn check_update(app: tauri::AppHandle) -> Result<Option<UpdateInfo>, String> {
+    use tauri_plugin_updater::UpdaterExt;
+    let update = app
+        .updater()
+        .map_err(|e| e.to_string())?
+        .check()
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(update.map(|u| UpdateInfo {
+        version: u.version.clone(),
+        notes: u.body.clone().unwrap_or_default(),
+    }))
+}
+
+/// Download and install the latest release, then exit so the installer can run.
+/// On Windows (NSIS) the installer launches and the process exits automatically.
+/// On macOS the app restarts into the new version.
+#[tauri::command]
+async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
+    use tauri_plugin_updater::UpdaterExt;
+    let update = app
+        .updater()
+        .map_err(|e| e.to_string())?
+        .check()
+        .await
+        .map_err(|e| e.to_string())?;
+    if let Some(update) = update {
+        update
+            .download_and_install(|_event| {}, || {})
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+
 
 fn main() {
     let shared_state: SharedState = Arc::new(Mutex::new(AppState::default()));
@@ -445,6 +492,8 @@ fn main() {
             set_launch_config,
             log_activity,
             get_activity_log,
+            check_update,
+            install_update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running CombatLedger companion");

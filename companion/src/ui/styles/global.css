@@ -677,3 +677,79 @@ select option {
 }
 
 .toast--error { color: var(--red); }
+
+/* ============================================================================
+   Update banner
+   ============================================================================ */
+
+.update-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: color-mix(in srgb, var(--gold) 7%, var(--bg-panel));
+  border-bottom: 1px solid var(--gold-dim);
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.update-banner--downloading {
+  background: color-mix(in srgb, var(--blue) 7%, var(--bg-panel));
+  border-bottom-color: var(--blue-dim);
+}
+
+.update-banner--error {
+  background: color-mix(in srgb, var(--red) 7%, var(--bg-panel));
+  border-bottom-color: var(--red-dim);
+}
+
+.update-banner__icon {
+  color: var(--gold);
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.update-banner--downloading .update-banner__icon { color: var(--blue); }
+
+.update-banner__text {
+  flex: 1;
+  color: var(--text-secondary);
+}
+
+.update-banner__version {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.update-banner__btn {
+  padding: 3px 12px;
+  background: var(--gold);
+  color: #0a0c10;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  height: 24px;
+  flex-shrink: 0;
+  transition: background var(--transition);
+}
+
+.update-banner__btn:hover { background: #f0b830; }
+
+.update-banner__dismiss {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--radius);
+  flex-shrink: 0;
+  transition: color var(--transition);
+}
+
+.update-banner__dismiss:hover { color: var(--text-primary); }
