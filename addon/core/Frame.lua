@@ -253,7 +253,7 @@ function Frame:Init()
     local verLabel = bottomBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     verLabel:SetPoint("LEFT", bottomBar, "LEFT", 12, 0)
     verLabel:SetTextColor(C.textMuted.r, C.textMuted.g, C.textMuted.b)
-    verLabel:SetText("CombatLedger v0.4.0  ·  Requires Companion ≥ 0.4.0")
+    verLabel:SetText("CombatLedger v1.1.0  ·  Requires Companion ≥ 1.1.0")
 
     self.companionStatus = bottomBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     self.companionStatus:SetPoint("RIGHT", bottomBar, "RIGHT", -12, 0)

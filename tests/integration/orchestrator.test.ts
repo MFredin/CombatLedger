@@ -120,7 +120,7 @@ describe("Single wipe pull", () => {
   });
 
   it("luaContent contains companionVersion", () => {
-    expect(output.luaContent).toContain('"0.4.0"');
+    expect(output.luaContent).toContain('"1.1.0"');
   });
 
   it("luaContent contains sessions table", () => {
