@@ -103,14 +103,35 @@ export async function importLogFile(
         else summary.sessionsSkipped++;
       }
 
-      // Reload orchestrator history so subsequent fights in this session
-      // include the newly-imported sessions without a restart.
+      // Reload orchestrator history so subsequent fights include imported sessions.
       await orchestrator.initialize();
       const lua = orchestrator.generateStartupLua();
       if (lua) {
-        await invoke("write_session", { luaContent: lua });
+        try {
+          await invoke("write_session", { luaContent: lua });
+          await invoke("log_activity", {
+            level: "info",
+            message: `Import: ${summary.sessionsImported} session(s) imported — GeneratedData.lua updated. Do a /reload in WoW.`,
+          });
+        } catch (err) {
+          // Write failed — wow_paths may not be configured.  Log it visibly
+          // in the Activity tab so the user knows why WoW isn't showing data.
+          console.error("[importer] write_session failed:", err);
+          await invoke("log_activity", {
+            level: "error",
+            message: `Import: failed to write GeneratedData.lua — ${String(err)}. Check that WoW path is configured in Settings.`,
+          }).catch(() => {});
+        }
+      } else {
+        // No snapshots available — sessions may not have been stored with snapshots.
+        await invoke("log_activity", {
+          level: "warn",
+          message: "Import: no session snapshots available — GeneratedData.lua was not updated.",
+        }).catch(() => {});
       }
 
+      // Always resolve so the UI transitions out of "Importing…" regardless
+      // of whether the file write succeeded.
       resolve(summary);
     });
 
