@@ -11,7 +11,7 @@ import ReactDOM from "react-dom/client";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { ParserOrchestrator } from "./parser/index.js";
+import { orchestrator } from "./orchestrator.js";
 import App from "./ui/App.js";
 import SettingsWindow from "./ui/windows/SettingsWindow.js";
 import "./ui/styles/global.css";
@@ -20,9 +20,20 @@ import "./ui/styles/global.css";
 // Log-line pipeline (only active in the main window)
 // ---------------------------------------------------------------------------
 
-const orchestrator = new ParserOrchestrator();
-
 async function initLogListener(): Promise<void> {
+  // Load historical snapshots from SQLite so subsequent fights include them,
+  // and write GeneratedData.lua immediately if history exists.
+  await orchestrator.initialize();
+  const startupLua = orchestrator.generateStartupLua();
+  if (startupLua) {
+    try {
+      await invoke("write_session", { luaContent: startupLua });
+      console.log("[main] Wrote historical session data to GeneratedData.lua on startup.");
+    } catch (err) {
+      console.warn("[main] Startup Lua write failed:", err);
+    }
+  }
+
   await listen<string[]>("log-lines", async (event) => {
     const outputs = await orchestrator.processLines(event.payload);
     for (const output of outputs) {
