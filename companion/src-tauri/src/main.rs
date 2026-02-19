@@ -148,15 +148,20 @@ async fn write_session(
         .as_ref()
         .ok_or_else(|| "WoW paths not configured".to_string())?;
 
-    let size = writer::saved_variables_size(&paths.saved_variables);
+    // Write CombatLedgerDB to the addon's GeneratedData.lua rather than the
+    // WoW-managed SavedVariables file.  WoW completely rewrites CombatLedger.lua
+    // on every /reload (wiping anything it doesn't own), but it never touches
+    // files in Interface/AddOns/.  GeneratedData.lua is listed first in the .toc
+    // so WoW loads it on every /reload, giving the addon fresh companion data.
+    let size = writer::saved_variables_size(&paths.generated_data);
     if size > 1_000_000 {
         eprintln!(
-            "[writer] Warning: SavedVariables file is {}KB — consider purging old sessions",
+            "[writer] Warning: GeneratedData.lua is {}KB — consider purging old sessions",
             size / 1024
         );
     }
 
-    writer::write_saved_variables(&paths.saved_variables, &lua_content)
+    writer::write_saved_variables(&paths.generated_data, &lua_content)
         .map_err(|e| e.to_string())
 }
 
@@ -184,6 +189,16 @@ async fn get_session_history(
 ) -> Result<Vec<SessionSummary>, String> {
     db.get_session_history(encounter_id, difficulty, limit, offset)
         .map_err(|e| e.to_string())
+}
+
+/// Return the most recent `limit` session snapshots (JSON strings) for
+/// bootstrapping the orchestrator's history on startup.
+#[tauri::command]
+async fn get_session_snapshots(
+    limit: i64,
+    db: State<'_, Database>,
+) -> Result<Vec<String>, String> {
+    db.get_session_snapshots(limit).map_err(|e| e.to_string())
 }
 
 /// Pull-over-pull trend data for the last N sessions on a given encounter.
@@ -485,6 +500,7 @@ fn main() {
             write_session,
             store_session,
             get_session_history,
+            get_session_snapshots,
             get_trend,
             get_distribution,
             get_encounters,

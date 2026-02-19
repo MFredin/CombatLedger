@@ -41,6 +41,9 @@ libs\Ace3\AceGUI-3.0\widgets\AceGUIWidget-MultiLineEditBox.lua
 libs\Ace3\AceGUI-3.0\widgets\AceGUIWidget-Slider.lua
 libs\Ace3\AceConfig-3.0\AceConfig-3.0.lua
 
+# ── Companion data (written by Companion app, never by WoW) ─────────────────
+GeneratedData.lua
+
 # ── Addon core ───────────────────────────────────────────────────────────────
 core\Data.lua
 core\Config.lua

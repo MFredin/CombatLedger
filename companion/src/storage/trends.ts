@@ -33,6 +33,7 @@ export function buildSessionInsert(
   interrupts: InterruptReport,
   ccCoverage: CCCoverage[],
   performance: PerformanceReport,
+  sessionSnapshot: string,
 ): SessionInsert {
   const avgCcCoverage =
     ccCoverage.length > 0
@@ -73,6 +74,7 @@ export function buildSessionInsert(
     total_healing_done: performance.totalHealingDone,
     cc_avg_coverage_pct: Math.round(avgCcCoverage * 10) / 10,
     players,
+    session_snapshot: sessionSnapshot,
   };
 }
 
@@ -96,8 +98,9 @@ export async function persistAndAnalyze(
   interrupts: InterruptReport,
   ccCoverage: CCCoverage[],
   performance: PerformanceReport,
+  sessionSnapshot: string,
 ): Promise<TrendAnalysis> {
-  const insert = buildSessionInsert(session, deaths, interrupts, ccCoverage, performance);
+  const insert = buildSessionInsert(session, deaths, interrupts, ccCoverage, performance, sessionSnapshot);
   const sessionDbId = await storeSession(insert);
 
   const [trend, distribution] = await Promise.all([
