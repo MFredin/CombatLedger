@@ -27,6 +27,15 @@ async function main(): Promise<void> {
   // from the first fight even if the companion was restarted between sessions.
   await orchestrator.initialize();
 
+  // Write GeneratedData.lua immediately using historical data so the addon can
+  // show previous sessions as soon as the user does a /reload — no need to wait
+  // for the first fight of the current session to finish.
+  const startupLua = orchestrator.generateStartupLua();
+  if (startupLua) {
+    await onSessionComplete(startupLua);
+    console.log("[main] Wrote historical session data to GeneratedData.lua on startup.");
+  }
+
   // Listen for batches of new log lines from the Rust watcher.
   await listen<string[]>("log-lines", async (event) => {
     const outputs = await orchestrator.processLines(event.payload);

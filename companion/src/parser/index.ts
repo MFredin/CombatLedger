@@ -47,6 +47,19 @@ export class ParserOrchestrator {
     }
   }
 
+  /** Generate a Lua file from historical snapshots alone, for writing on startup
+   *  before any fight has ended.  Returns null if there is no history yet. */
+  generateStartupLua(): string | null {
+    if (this.historicalSnapshots.length === 0) return null;
+    return serializeToLua({
+      version: 4,
+      generatedAt: Math.floor(Date.now() / 1000),
+      companionVersion: "1.1.0",
+      sessions: [],
+      historicalSnapshots: this.historicalSnapshots,
+    });
+  }
+
   /** Process a batch of new log lines. Returns completed sessions (if any). */
   async processLines(lines: string[]): Promise<SessionOutput[]> {
     const outputs: SessionOutput[] = [];
