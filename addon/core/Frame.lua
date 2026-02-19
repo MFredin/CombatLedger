@@ -193,12 +193,12 @@ function Frame:Init()
 
     -- Addon title: "COMBAT" plain + "LEDGER" in gold
     local titleText = titleBar:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    titleText:SetPoint("LEFT", logoMark, "RIGHT", 8, 2)
+    titleText:SetPoint("LEFT", logoMark, "RIGHT", 8, 8)
     titleText:SetText("COMBAT|cffe8a820LEDGER|r")
 
     -- Sub-label: "POST-COMBAT ANALYSIS ENGINE"
     local subLabel = titleBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    subLabel:SetPoint("LEFT", logoMark, "RIGHT", 9, -9)
+    subLabel:SetPoint("LEFT", logoMark, "RIGHT", 9, -12)
     subLabel:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b)
     subLabel:SetText("POST-COMBAT ANALYSIS ENGINE")
 
@@ -211,7 +211,7 @@ function Frame:Init()
     closeBg:SetColorTexture(C.borderVis.r, C.borderVis.g, C.borderVis.b)
     local closeX = closeBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     closeX:SetAllPoints(closeBtn)
-    closeX:SetText("✕")
+    closeX:SetText("X")
     closeX:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b)
     closeBtn:SetScript("OnClick", function() f:Hide() end)
     closeBtn:SetScript("OnEnter", function() closeBg:SetColorTexture(C.red.r, C.red.g, C.red.b, 0.6) closeX:SetTextColor(1, 1, 1) end)
@@ -268,7 +268,7 @@ function Frame:Init()
     local rLbl = reloadBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     rLbl:SetAllPoints(reloadBtn)
     rLbl:SetJustifyH("CENTER")
-    rLbl:SetText("↻  RELOAD DATA")
+    rLbl:SetText("RELOAD DATA")
     rLbl:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b)
 
     reloadBtn:SetScript("OnClick", function()
@@ -527,7 +527,7 @@ function Frame:UpdateSessionBadge()
         self.sessionBadge:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b)
         if self.companionStatus then
             local ver = session.companionVersion and ("v" .. session.companionVersion) or "CONNECTED"
-            self.companionStatus:SetText(string.format("|cff40e87a● |r%s", ver))
+            self.companionStatus:SetText(string.format("|TInterface\\RaidFrame\\ReadyCheck-Ready:10:10|t %s", ver))
         end
     end
 end
@@ -658,4 +658,77 @@ function Frame:Card(parent, yOffset, h, stripeR, stripeG, stripeB)
     end
 
     return card
+end
+
+--- Create a themed scrollable area inside `parent`.
+--  Returns scrollFrame, contentChild.
+--  The scrollbar is a slim dark track with a thumb that glows gold on hover.
+--  All three pieces (scrollFrame, track, thumb) are children of `parent` so
+--  they stay inside the CL window border.
+function Frame:MakeScrollable(parent)
+    local BAR_W   = 6   -- thumb / track width in px
+    local BAR_PAD = 3   -- gap from the parent's right edge
+
+    -- ScrollFrame leaves room for the bar on the right
+    local sf = CreateFrame("ScrollFrame", nil, parent)
+    sf:SetPoint("TOPLEFT",     parent, "TOPLEFT",     0, 0)
+    sf:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -(BAR_W + BAR_PAD + 2), 0)
+    sf:EnableMouseWheel(true)
+
+    -- Scroll content child — width matches the scrollFrame
+    local content = CreateFrame("Frame", nil, sf)
+    local contentW = parent:GetWidth() - BAR_W - BAR_PAD - 2
+    content:SetWidth(contentW > 0 and contentW or 900)
+    content:SetHeight(1)   -- grows as rows are added
+    sf:SetScrollChild(content)
+
+    -- Dark track strip
+    local track = CreateFrame("Frame", nil, parent)
+    track:SetWidth(BAR_W)
+    track:SetPoint("TOPRIGHT",    parent, "TOPRIGHT",    -BAR_PAD, -2)
+    track:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -BAR_PAD,  2)
+    local trackTex = track:CreateTexture(nil, "BACKGROUND")
+    trackTex:SetAllPoints(track)
+    trackTex:SetColorTexture(0.04, 0.05, 0.07)
+
+    -- Thumb
+    local thumb = CreateFrame("Frame", nil, track)
+    thumb:SetWidth(BAR_W)
+    local thumbTex = thumb:CreateTexture(nil, "OVERLAY")
+    thumbTex:SetAllPoints(thumb)
+    thumbTex:SetColorTexture(C.borderVis.r, C.borderVis.g, C.borderVis.b)
+    thumb:Hide()
+    thumb:EnableMouse(true)
+    thumb:SetScript("OnEnter", function()
+        thumbTex:SetColorTexture(C.gold.r, C.gold.g, C.gold.b, 0.8)
+    end)
+    thumb:SetScript("OnLeave", function()
+        thumbTex:SetColorTexture(C.borderVis.r, C.borderVis.g, C.borderVis.b)
+    end)
+
+    local function updateThumb()
+        local range = sf:GetVerticalScrollRange()
+        if range <= 0 then thumb:Hide(); return end
+        thumb:Show()
+        local trackH = track:GetHeight()
+        local sfH    = sf:GetHeight()
+        local thumbH = math.max(20, trackH * sfH / (sfH + range))
+        local pos    = (sf:GetVerticalScroll() / range) * (trackH - thumbH)
+        thumb:ClearAllPoints()
+        thumb:SetHeight(thumbH)
+        thumb:SetPoint("TOP", track, "TOP", 0, -pos)
+    end
+
+    sf:SetScript("OnVerticalScroll", function(self, val)
+        self:SetVerticalScroll(val)
+        updateThumb()
+    end)
+    sf:SetScript("OnScrollRangeChanged", updateThumb)
+    sf:SetScript("OnMouseWheel", function(self, delta)
+        local range = self:GetVerticalScrollRange()
+        local cur   = self:GetVerticalScroll()
+        self:SetVerticalScroll(math.max(0, math.min(range, cur - delta * 40)))
+    end)
+
+    return sf, content
 end

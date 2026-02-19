@@ -79,7 +79,7 @@ local function buildDeathCard(parent, death, yOffset)
     -- Fatal spell badge on right
     local fatalLabel = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     fatalLabel:SetPoint("RIGHT", header, "RIGHT", -12, 0)
-    fatalLabel:SetFormattedText("|cffe84040☠ %s (+%d overkill)|r",
+    fatalLabel:SetFormattedText("|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_8:12:12|t |cffe84040%s (+%d overkill)|r",
         death.fatalSpellName, death.overkill)
 
     -- Content (timeline), shown/hidden on click
@@ -116,7 +116,7 @@ local function buildDeathCard(parent, death, yOffset)
         icon:SetWidth(20)
         icon:SetPoint("LEFT", row, "LEFT", 4, 0)
         if ev.isFatal then
-            icon:SetText("|cffe84040☠|r")
+            icon:SetText("|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_8:12:12|t")
         elseif ev.type == "damage" then
             icon:SetText("|cffe84040D|r")
         else
@@ -166,7 +166,7 @@ local function buildDeathCard(parent, death, yOffset)
         totalH = totalH + 4
         local defNote = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         defNote:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -(totalH))
-        defNote:SetText("|cffffff00⚠ " .. table.concat(defNotes, "  |  ") .. "|r")
+        defNote:SetText("|cffffff00!! " .. table.concat(defNotes, "  |  ") .. "|r")
         totalH = totalH + 16
     end
 
@@ -216,13 +216,8 @@ function Deaths:Render(parent)
     end
 
     -- Scrollable container
-    local scrollFrame = CreateFrame("ScrollFrame", nil, parent, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetAllPoints(parent)
+    local scrollFrame, content = CL.Frame:MakeScrollable(parent)
     self.scrollFrame = scrollFrame
-
-    local content = CreateFrame("Frame", nil, scrollFrame)
-    content:SetWidth(parent:GetWidth() - 28)
-    scrollFrame:SetScrollChild(content)
 
     -- Encounter header
     local hdr = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")

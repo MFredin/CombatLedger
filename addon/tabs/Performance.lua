@@ -145,7 +145,7 @@ local function buildPlayerRow(parent, p, yOffset, rowIndex)
         deathFs:SetTextColor(0.91, 0.25, 0.25)
         deathFs:SetText(tostring(deathCount))
     else
-        deathFs:SetText("|cff40b870✓|r")
+        deathFs:SetText("|TInterface\\RaidFrame\\ReadyCheck-Ready:12:12|t")
     end
 
     -- CC applied (teal)
@@ -212,7 +212,7 @@ local function buildDefensiveSection(content, defensiveAudit, yOffset)
                 local sinceStr = missed.secSinceLastUse
                     and string.format("(last used %.0fs ago)", missed.secSinceLastUse)
                     or "(never used)"
-                missedLabel:SetFormattedText("|cfffe8040⚠ %s %s|r", missed.spellName, sinceStr)
+                missedLabel:SetFormattedText("|cfffe8040!! %s %s|r", missed.spellName, sinceStr)
                 yOffset = yOffset - 16
             end
 
@@ -224,7 +224,7 @@ local function buildDefensiveSection(content, defensiveAudit, yOffset)
                     and string.format("(last cast %.0fs ago)", ext.secSinceLastUse)
                     or "(never used)"
                 extLabel:SetFormattedText(
-                    "|cff40b8e8⟳ %s from %s was available %s|r",
+                    "|cff40b8e8>> %s from %s was available %s|r",
                     ext.spellName, ext.casterName, sinceStr
                 )
                 yOffset = yOffset - 16
@@ -270,13 +270,8 @@ function Performance:Render(parent)
     end
 
     -- Scroll container
-    local scrollFrame = CreateFrame("ScrollFrame", nil, parent, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetAllPoints(parent)
+    local scrollFrame, content = CL.Frame:MakeScrollable(parent)
     self.scrollFrame = scrollFrame
-
-    local content = CreateFrame("Frame", nil, scrollFrame)
-    content:SetWidth(parent:GetWidth() - 28)
-    scrollFrame:SetScrollChild(content)
 
     -- Encounter summary
     local hdr = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")

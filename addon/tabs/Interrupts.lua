@@ -106,11 +106,11 @@ local function buildRow(parent, ev, yOffset, rowIndex)
     if ev.wasInterrupted then
         local sc = STATUS_KICKED
         status:SetTextColor(sc.r, sc.g, sc.b)
-        status:SetText("✓ Kicked")
+        status:SetText("|TInterface\\RaidFrame\\ReadyCheck-Ready:12:12|t Kicked")
     else
         local sc = STATUS_MISSED
         status:SetTextColor(sc.r, sc.g, sc.b)
-        status:SetText("✕ Missed")
+        status:SetText("|TInterface\\RaidFrame\\ReadyCheck-NotReady:12:12|t Missed")
     end
 end
 
@@ -168,13 +168,8 @@ function Interrupts:Render(parent)
 
     local summary = report.summary or {}
 
-    local scrollFrame = CreateFrame("ScrollFrame", nil, parent, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetAllPoints(parent)
+    local scrollFrame, content = CL.Frame:MakeScrollable(parent)
     self.scrollFrame = scrollFrame
-
-    local content = CreateFrame("Frame", nil, scrollFrame)
-    content:SetWidth(parent:GetWidth() - 28)
-    scrollFrame:SetScrollChild(content)
 
     -- Summary line
     local sumLine = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")

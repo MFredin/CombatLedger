@@ -177,7 +177,7 @@ function Overview:Render(parent)
         local noneFs = leftCol:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         noneFs:SetPoint("TOPLEFT", leftCol, "TOPLEFT", 0, rowY)
         noneFs:SetTextColor(C.textMuted.r, C.textMuted.g, C.textMuted.b)
-        noneFs:SetText("No deaths this pull  ✓")
+        noneFs:SetText("No deaths this pull  |TInterface\\RaidFrame\\ReadyCheck-Ready:12:12|t")
         noneFs:SetTextColor(C.green.r, C.green.g, C.green.b)
     else
         for i, death in ipairs(deathList) do

@@ -216,13 +216,8 @@ function History:Render(parent)
         return
     end
 
-    local scrollFrame = CreateFrame("ScrollFrame", nil, parent, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetAllPoints(parent)
+    local scrollFrame, content = CL.Frame:MakeScrollable(parent)
     self.scrollFrame = scrollFrame
-
-    local content = CreateFrame("Frame", nil, scrollFrame)
-    content:SetWidth(parent:GetWidth() - 28)
-    scrollFrame:SetScrollChild(content)
 
     -- Session count banner
     local banner = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")

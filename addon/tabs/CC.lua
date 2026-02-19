@@ -106,7 +106,7 @@ local function buildFilterToggle(parent, yOffset, onToggle)
 
     local function refresh()
         if filterProblems then
-            lbl:SetText("|cfffe8040⚠ Problem targets only|r")
+            lbl:SetText("|cfffe8040!! Problem targets only|r")
         else
             lbl:SetText("|cff6b7a9aShow: All targets|r")
         end
@@ -157,7 +157,7 @@ local function buildTargetRow(parent, cc, yOffset, sessionStartTime)
         wastedLabel:SetWidth(100)
         wastedLabel:SetPoint("TOPLEFT", rowFrame, "TOPLEFT", 212, -4)
         wastedLabel:SetTextColor(0.91, 0.25, 0.25)
-        wastedLabel:SetFormattedText("⚠ %d immune", cc.wastedCasts)
+        wastedLabel:SetFormattedText("!! %d immune", cc.wastedCasts)
     end
 
     -- Timeline bar background
@@ -255,13 +255,8 @@ function CC:Render(parent)
     local sessionStartTime = session.startTime or 0
 
     -- Scroll container
-    local scrollFrame = CreateFrame("ScrollFrame", nil, parent, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetAllPoints(parent)
+    local scrollFrame, content = CL.Frame:MakeScrollable(parent)
     self.scrollFrame = scrollFrame
-
-    local content = CreateFrame("Frame", nil, scrollFrame)
-    content:SetWidth(parent:GetWidth() - 28)
-    scrollFrame:SetScrollChild(content)
 
     -- Encounter header
     local hdr = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
