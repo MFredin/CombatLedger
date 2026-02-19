@@ -138,7 +138,6 @@ local function buildPlayerRow(parent, p, yOffset, rowIndex)
 
     -- Deaths (red = bad)
     local deathFs = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    deathFs:SetFont("Fonts\\ARIALN.TTF", 11)
     deathFs:SetWidth(50)
     deathFs:SetPoint("LEFT", row, "LEFT", 448, 0)
     local deathCount = p.deathCount or 0
@@ -146,7 +145,7 @@ local function buildPlayerRow(parent, p, yOffset, rowIndex)
         deathFs:SetTextColor(0.91, 0.25, 0.25)
         deathFs:SetText(tostring(deathCount))
     else
-        deathFs:SetText("|cff40b870✓|r")
+        deathFs:SetText("|TInterface\\RaidFrame\\ReadyCheck-Ready:12:12|t")
     end
 
     -- CC applied (teal)
@@ -209,25 +208,23 @@ local function buildDefensiveSection(content, defensiveAudit, yOffset)
 
             for _, missed in ipairs(playerAudit.missedAtDeath) do
                 local missedLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-                missedLabel:SetFont("Fonts\\ARIALN.TTF", 11)
                 missedLabel:SetPoint("TOPLEFT", content, "TOPLEFT", 20, yOffset)
                 local sinceStr = missed.secSinceLastUse
                     and string.format("(last used %.0fs ago)", missed.secSinceLastUse)
                     or "(never used)"
-                missedLabel:SetFormattedText("|cfffe8040⚠ %s %s|r", missed.spellName, sinceStr)
+                missedLabel:SetFormattedText("|cfffe8040!! %s %s|r", missed.spellName, sinceStr)
                 yOffset = yOffset - 16
             end
 
             -- Phase 3.5: missed external defensives (e.g. Ironbark available but unused)
             for _, ext in ipairs(playerAudit.missedExternals or {}) do
                 local extLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-                extLabel:SetFont("Fonts\\ARIALN.TTF", 11)
                 extLabel:SetPoint("TOPLEFT", content, "TOPLEFT", 20, yOffset)
                 local sinceStr = ext.secSinceLastUse
                     and string.format("(last cast %.0fs ago)", ext.secSinceLastUse)
                     or "(never used)"
                 extLabel:SetFormattedText(
-                    "|cff40b8e8⟳ %s from %s was available %s|r",
+                    "|cff40b8e8>> %s from %s was available %s|r",
                     ext.spellName, ext.casterName, sinceStr
                 )
                 yOffset = yOffset - 16
