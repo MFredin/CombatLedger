@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   # ---------------------------------------------------------------------------
   # Build and publish the companion app on all three platforms in parallel
