@@ -102,15 +102,16 @@ local function buildRow(parent, ev, yOffset, rowIndex)
 
     -- Status badge (col 5)
     local status = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    status:SetFont("Fonts\\ARIALN.TTF", 11)
     status:SetPoint("LEFT", row, "LEFT", x, 0)
     if ev.wasInterrupted then
         local sc = STATUS_KICKED
         status:SetTextColor(sc.r, sc.g, sc.b)
-        status:SetText("|TInterface\\RaidFrame\\ReadyCheck-Ready:12:12|t Kicked")
+        status:SetText("✓ Kicked")
     else
         local sc = STATUS_MISSED
         status:SetTextColor(sc.r, sc.g, sc.b)
-        status:SetText("|TInterface\\RaidFrame\\ReadyCheck-NotReady:12:12|t Missed")
+        status:SetText("✕ Missed")
     end
 end
 

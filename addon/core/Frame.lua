@@ -210,8 +210,9 @@ function Frame:Init()
     closeBg:SetAllPoints(closeBtn)
     closeBg:SetColorTexture(C.borderVis.r, C.borderVis.g, C.borderVis.b)
     local closeX = closeBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    closeX:SetFont("Fonts\\ARIALN.TTF", 11)
     closeX:SetAllPoints(closeBtn)
-    closeX:SetText("X")
+    closeX:SetText("✕")
     closeX:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b)
     closeBtn:SetScript("OnClick", function() f:Hide() end)
     closeBtn:SetScript("OnEnter", function() closeBg:SetColorTexture(C.red.r, C.red.g, C.red.b, 0.6) closeX:SetTextColor(1, 1, 1) end)
@@ -266,9 +267,10 @@ function Frame:Init()
     rBg:SetColorTexture(C.borderSub.r, C.borderSub.g, C.borderSub.b)
 
     local rLbl = reloadBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    rLbl:SetFont("Fonts\\ARIALN.TTF", 11)
     rLbl:SetAllPoints(reloadBtn)
     rLbl:SetJustifyH("CENTER")
-    rLbl:SetText("RELOAD DATA")
+    rLbl:SetText("↻  RELOAD DATA")
     rLbl:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b)
 
     reloadBtn:SetScript("OnClick", function()
@@ -285,6 +287,7 @@ function Frame:Init()
     self.reloadBtn = reloadBtn
 
     self.companionStatus = bottomBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    self.companionStatus:SetFont("Fonts\\ARIALN.TTF", 11)
     self.companionStatus:SetPoint("RIGHT", reloadBtn, "LEFT", -12, 0)
     self.companionStatus:SetTextColor(C.textMuted.r, C.textMuted.g, C.textMuted.b)
     self.companionStatus:SetText("NO COMPANION DATA")
@@ -527,7 +530,7 @@ function Frame:UpdateSessionBadge()
         self.sessionBadge:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b)
         if self.companionStatus then
             local ver = session.companionVersion and ("v" .. session.companionVersion) or "CONNECTED"
-            self.companionStatus:SetText(string.format("|TInterface\\RaidFrame\\ReadyCheck-Ready:10:10|t %s", ver))
+            self.companionStatus:SetText(string.format("|cff40e87a● |r%s", ver))
         end
     end
 end

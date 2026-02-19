@@ -102,11 +102,12 @@ local function buildFilterToggle(parent, yOffset, onToggle)
     bgTex:SetColorTexture(0.15, 0.15, 0.18, 1)
 
     local lbl = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    lbl:SetFont("Fonts\\ARIALN.TTF", 11)
     lbl:SetAllPoints(btn)
 
     local function refresh()
         if filterProblems then
-            lbl:SetText("|cfffe8040!! Problem targets only|r")
+            lbl:SetText("|cfffe8040⚠ Problem targets only|r")
         else
             lbl:SetText("|cff6b7a9aShow: All targets|r")
         end
@@ -154,10 +155,11 @@ local function buildTargetRow(parent, cc, yOffset, sessionStartTime)
     -- Wasted (immune) count
     if (cc.wastedCasts or 0) > 0 then
         local wastedLabel = rowFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        wastedLabel:SetFont("Fonts\\ARIALN.TTF", 11)
         wastedLabel:SetWidth(100)
         wastedLabel:SetPoint("TOPLEFT", rowFrame, "TOPLEFT", 212, -4)
         wastedLabel:SetTextColor(0.91, 0.25, 0.25)
-        wastedLabel:SetFormattedText("!! %d immune", cc.wastedCasts)
+        wastedLabel:SetFormattedText("⚠ %d immune", cc.wastedCasts)
     end
 
     -- Timeline bar background
