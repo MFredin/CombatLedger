@@ -4,7 +4,7 @@
 ## Notes: Post-combat analysis — requires CombatLedger Companion app
 ## Version: 0.4.0
 ## Author: MFredin
-## SavedVariables: CombatLedgerSettings
+## SavedVariables: CombatLedgerSettings, CombatLedgerDB
 ## SavedVariablesPerCharacter: CombatLedgerCharSettings
 ## X-Companion-Required: true
 
