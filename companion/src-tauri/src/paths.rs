@@ -6,7 +6,12 @@ use std::path::{Path, PathBuf};
 pub struct WowPaths {
     pub wow_root: PathBuf,
     pub combat_log: PathBuf,
+    /// WoW's own SavedVariables file — managed by WoW, used for CombatLedgerSettings only.
     pub saved_variables: PathBuf,
+    /// Addon-directory Lua file written by the companion for CombatLedgerDB.
+    /// WoW loads this file on every /reload (it is listed in the .toc) but never
+    /// writes to it, so companion data is never overwritten by WoW's save pass.
+    pub generated_data: PathBuf,
     pub account_name: String,
 }
 
@@ -119,10 +124,16 @@ pub fn build_paths(wow_root: PathBuf, account_name: String) -> WowPaths {
         .join(&account_name)
         .join("SavedVariables")
         .join("CombatLedger.lua");
+    let generated_data = wow_root
+        .join("Interface")
+        .join("AddOns")
+        .join("CombatLedger")
+        .join("GeneratedData.lua");
     WowPaths {
         wow_root,
         combat_log,
         saved_variables,
+        generated_data,
         account_name,
     }
 }
