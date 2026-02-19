@@ -34,23 +34,36 @@ end
 
 -- ---------------------------------------------------------------------------
 -- Build a single death card
+--
+-- prevCard : frame above this one, or nil for the first card.
+--            Each card anchors TOPLEFT → prevCard BOTTOMLEFT so WoW moves
+--            subsequent cards automatically when a card expands/collapses.
+-- onToggle : callback fired after every height change so the caller can
+--            recompute scroll-content height.
+--
+-- Returns  : the card Frame.
 -- ---------------------------------------------------------------------------
 
-local function buildDeathCard(parent, death, yOffset)
+local function buildDeathCard(parent, death, prevCard, onToggle)
     local CARD_HEADER_H = 32
-    local ROW_H = 18
-    local CARD_W = parent:GetWidth() - 32
+    local ROW_H         = 18
+    local CARD_W        = parent:GetWidth() - 32
 
-    -- Card outer frame
+    -- Card outer frame — anchor to bottom of the previous card (or parent top)
     local card = CreateFrame("Frame", nil, parent)
     card:SetWidth(CARD_W)
-    card:SetPoint("TOPLEFT", parent, "TOPLEFT", 16, yOffset)
+    card:SetHeight(CARD_HEADER_H)
+    if prevCard then
+        card:SetPoint("TOPLEFT", prevCard, "BOTTOMLEFT", 0, -8)
+    else
+        card:SetPoint("TOPLEFT", parent, "TOPLEFT", 16, -44)
+    end
     setBg(card, C.cardBg.r, C.cardBg.g, C.cardBg.b)
 
     -- Header
     local header = CreateFrame("Button", nil, card)
     header:SetHeight(CARD_HEADER_H)
-    header:SetPoint("TOPLEFT", card, "TOPLEFT")
+    header:SetPoint("TOPLEFT",  card, "TOPLEFT")
     header:SetPoint("TOPRIGHT", card, "TOPRIGHT")
     local cr, cg, cb = classColour(death.playerClass)
     local headerBg = header:CreateTexture(nil, "BACKGROUND")
@@ -60,7 +73,7 @@ local function buildDeathCard(parent, death, yOffset)
     -- Class colour strip on left edge
     local strip = header:CreateTexture(nil, "ARTWORK")
     strip:SetWidth(4)
-    strip:SetPoint("TOPLEFT", header, "TOPLEFT")
+    strip:SetPoint("TOPLEFT",    header, "TOPLEFT")
     strip:SetPoint("BOTTOMLEFT", header, "BOTTOMLEFT")
     strip:SetColorTexture(cr, cg, cb, 1)
 
@@ -79,30 +92,30 @@ local function buildDeathCard(parent, death, yOffset)
     -- Fatal spell badge on right
     local fatalLabel = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     fatalLabel:SetPoint("RIGHT", header, "RIGHT", -12, 0)
-    fatalLabel:SetFormattedText("|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_8:12:12|t |cffe84040%s (+%d overkill)|r",
+    fatalLabel:SetFormattedText(
+        "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_8:12:12|t |cffe84040%s (+%d overkill)|r",
         death.fatalSpellName, death.overkill)
 
     -- Content (timeline), shown/hidden on click
     local content = CreateFrame("Frame", nil, card)
-    content:SetPoint("TOPLEFT", header, "BOTTOMLEFT")
+    content:SetPoint("TOPLEFT",  header, "BOTTOMLEFT")
     content:SetPoint("TOPRIGHT", header, "BOTTOMRIGHT")
     content:Hide()
 
-    -- HP bar (3px colour bar at top of content)
+    -- HP bar (3 px colour bar at top of content)
     local hpBar = CreateFrame("Frame", nil, content)
     hpBar:SetHeight(3)
-    hpBar:SetPoint("TOPLEFT", content, "TOPLEFT")
+    hpBar:SetPoint("TOPLEFT",  content, "TOPLEFT")
     hpBar:SetPoint("TOPRIGHT", content, "TOPRIGHT")
     setBg(hpBar, 0.2, 0.2, 0.2)
 
     -- Build timeline rows
-    local events = death.events or {}
-    local totalH = 6 -- top padding
-    local rows = {}
+    local events  = death.events or {}
+    local contentH = 6  -- top padding
     for i, ev in ipairs(events) do
         local row = CreateFrame("Frame", nil, content)
         row:SetHeight(ROW_H)
-        row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -(totalH + 3))
+        row:SetPoint("TOPLEFT",  content, "TOPLEFT",  0, -(contentH + 3))
         row:SetPoint("TOPRIGHT", content, "TOPRIGHT")
 
         if ev.isFatal then
@@ -111,7 +124,7 @@ local function buildDeathCard(parent, death, yOffset)
             setBg(row, 0.06, 0.07, 0.09, 1)
         end
 
-        -- Icon (D/H/skull)
+        -- Icon (D / H / skull)
         local icon = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         icon:SetWidth(20)
         icon:SetPoint("LEFT", row, "LEFT", 4, 0)
@@ -151,11 +164,10 @@ local function buildDeathCard(parent, death, yOffset)
         hp:SetPoint("LEFT", row, "LEFT", 390, 0)
         hp:SetFormattedText("|cff6b7a9a%d%%|r", ev.estimatedHpAfter)
 
-        totalH = totalH + ROW_H
-        table.insert(rows, row)
+        contentH = contentH + ROW_H
     end
 
-    -- Defensive note (if any available defensive was unused)
+    -- Defensive note (available self-defensive was not used at time of death)
     local defNotes = {}
     for _, def in ipairs(death.availableDefensives or {}) do
         if def.available and not def.wasUsed then
@@ -163,32 +175,44 @@ local function buildDeathCard(parent, death, yOffset)
         end
     end
     if #defNotes > 0 then
-        totalH = totalH + 4
+        contentH = contentH + 4
         local defNote = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        defNote:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -(totalH))
+        defNote:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -contentH)
         defNote:SetText("|cffffff00!! " .. table.concat(defNotes, "  |  ") .. "|r")
-        totalH = totalH + 16
+        contentH = contentH + 16
     end
 
-    totalH = totalH + 6
-    content:SetHeight(totalH)
-    card:SetHeight(CARD_HEADER_H + (content:IsShown() and totalH or 0))
+    contentH = contentH + 6  -- bottom padding
+    content:SetHeight(contentH)
 
-    -- Toggle expand/collapse on header click
+    -- Toggle expand / collapse
     local expanded = false
     header:SetScript("OnClick", function()
         expanded = not expanded
         if expanded then
             content:Show()
-            card:SetHeight(CARD_HEADER_H + totalH)
+            card:SetHeight(CARD_HEADER_H + contentH)
         else
             content:Hide()
             card:SetHeight(CARD_HEADER_H)
         end
+        if onToggle then onToggle() end
     end)
 
-    -- Return total height consumed
-    return CARD_HEADER_H + 4
+    return card
+end
+
+-- ---------------------------------------------------------------------------
+-- Scroll-content height recalculation
+-- Called once at render time and again each time any card is toggled.
+-- ---------------------------------------------------------------------------
+
+local function recalcHeight(content, cards)
+    local h = 44  -- space occupied by the encounter header above the first card
+    for _, c in ipairs(cards) do
+        h = h + c:GetHeight() + 8  -- 8 px gap between cards
+    end
+    content:SetHeight(h + 16)      -- 16 px bottom padding
 end
 
 -- ---------------------------------------------------------------------------
@@ -208,7 +232,7 @@ function Deaths:Render(parent)
     CL.Frame:HideEmptyState()
 
     local session = CL.Data:GetActiveSession()
-    local deaths = CL.Data:GetDeaths(session)
+    local deaths  = CL.Data:GetDeaths(session)
 
     if #deaths == 0 then
         CL.Frame:ShowEmptyState("No deaths in this session.", "Well played.")
@@ -219,7 +243,7 @@ function Deaths:Render(parent)
     local scrollFrame, content = CL.Frame:MakeScrollable(parent)
     self.scrollFrame = scrollFrame
 
-    -- Encounter header
+    -- Encounter header (fixed 44 px above the first card)
     local hdr = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     hdr:SetPoint("TOPLEFT", content, "TOPLEFT", 16, -8)
     hdr:SetFormattedText("|cffe8a820%s|r  |cff6b7a9aPull #%d — %s — %d death(s)|r",
@@ -228,13 +252,19 @@ function Deaths:Render(parent)
         session.success and "Success" or "Wipe",
         #deaths)
 
-    local yOffset = -44
+    -- Build cards in an anchor chain
+    local cards    = {}
+    local prevCard = nil
     for _, death in ipairs(deaths) do
-        local cardH = buildDeathCard(content, death, yOffset)
-        yOffset = yOffset - cardH - 8
+        local card = buildDeathCard(content, death, prevCard, function()
+            recalcHeight(content, cards)
+        end)
+        table.insert(cards, card)
+        prevCard = card
     end
 
-    content:SetHeight(math.abs(yOffset) + 16)
+    -- Initial scroll-content height (all cards collapsed)
+    recalcHeight(content, cards)
 end
 
 function Deaths:Hide(parent)
