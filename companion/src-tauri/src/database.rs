@@ -80,6 +80,10 @@ CREATE TABLE IF NOT EXISTS activity_log (
 CREATE INDEX IF NOT EXISTS idx_activity_time ON activity_log(timestamp DESC);
 ";
 
+const SCHEMA_V3: &str = "
+ALTER TABLE sessions ADD COLUMN session_snapshot TEXT NOT NULL DEFAULT '';
+";
+
 // ---------------------------------------------------------------------------
 // Input types (received from TypeScript via Tauri invoke)
 // ---------------------------------------------------------------------------
@@ -120,6 +124,9 @@ pub struct SessionInsert {
     pub total_healing_done: i64,
     pub cc_avg_coverage_pct: f64,
     pub players: Vec<PlayerMetricInsert>,
+    /// JSON-serialised output of sessionToLuaValue — stored so historical sessions
+    /// can be included in GeneratedData.lua without re-running analysis.
+    pub session_snapshot: String,
 }
 
 // ---------------------------------------------------------------------------
@@ -256,6 +263,13 @@ impl Database {
                 [],
             )?;
         }
+        if current < 3 {
+            conn.execute_batch(SCHEMA_V3)?;
+            conn.execute(
+                "INSERT INTO schema_version (version) VALUES (3)",
+                [],
+            )?;
+        }
         Ok(())
     }
 
@@ -273,15 +287,15 @@ impl Database {
                 start_time, end_time, duration_sec, success, pull_number,
                 companion_version, total_deaths, interrupt_total, interrupt_hit,
                 interrupt_rate_pct, total_damage_done, total_healing_done,
-                cc_avg_coverage_pct
-            ) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17)",
+                cc_avg_coverage_pct, session_snapshot
+            ) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18)",
             params![
                 s.encounter_id, s.encounter_name, s.difficulty, s.group_size,
                 s.start_time, s.end_time, s.duration_sec, s.success as i64,
                 s.pull_number, s.companion_version,
                 s.total_deaths, s.interrupt_total, s.interrupt_hit,
                 s.interrupt_rate_pct, s.total_damage_done, s.total_healing_done,
-                s.cc_avg_coverage_pct,
+                s.cc_avg_coverage_pct, s.session_snapshot,
             ],
         )?;
         let session_id = conn.last_insert_rowid();
@@ -348,6 +362,24 @@ impl Database {
                 cc_avg_coverage_pct: r.get(14)?,
             }),
         )?;
+        let mut results = Vec::new();
+        for row in rows {
+            results.push(row?);
+        }
+        Ok(results)
+    }
+
+    /// Return the `session_snapshot` JSON blobs for the most recent `limit` sessions,
+    /// newest first.  Empty strings (pre-migration rows) are excluded.
+    pub fn get_session_snapshots(&self, limit: i64) -> Result<Vec<String>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT session_snapshot FROM sessions
+             WHERE session_snapshot != ''
+             ORDER BY start_time DESC
+             LIMIT ?1",
+        )?;
+        let rows = stmt.query_map(params![limit], |r| r.get(0))?;
         let mut results = Vec::new();
         for row in rows {
             results.push(row?);

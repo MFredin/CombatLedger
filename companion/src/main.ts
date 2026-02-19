@@ -23,6 +23,10 @@ async function onSessionComplete(luaContent: string): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  // Load historical session snapshots from SQLite so the addon has full history
+  // from the first fight even if the companion was restarted between sessions.
+  await orchestrator.initialize();
+
   // Listen for batches of new log lines from the Rust watcher.
   await listen<string[]>("log-lines", async (event) => {
     const outputs = await orchestrator.processLines(event.payload);

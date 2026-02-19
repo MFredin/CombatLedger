@@ -30,6 +30,9 @@ interface SerialiseInput {
     performance?: PerformanceReport;
     defensiveAudit?: DefensiveAuditReport;
   }>;
+  /** Pre-converted session snapshots loaded from SQLite for historical sessions.
+   *  Each element is the JSON-parsed output of a previous sessionToLuaValue call. */
+  historicalSnapshots?: Record<string, unknown>[];
   trend?: TrendReport;
   distribution?: DistributionReport;
 }
@@ -186,7 +189,7 @@ function defensiveAuditToLuaValue(audit: DefensiveAuditReport): LuaValue {
   };
 }
 
-function sessionToLuaValue(
+export function sessionToLuaValue(
   session: EncounterSession,
   deaths: DeathRecap[],
   interrupts: InterruptReport,
@@ -334,10 +337,13 @@ function distributionToLuaValue(dist: DistributionReport): LuaValue {
 // ---------------------------------------------------------------------------
 
 export function serializeToLua(input: SerialiseInput): string {
-  const sessionValues: LuaValue[] = input.sessions.map(
+  const currentValues: LuaValue[] = input.sessions.map(
     ({ session, deaths, interrupts, ccCoverage, performance, defensiveAudit }) =>
       sessionToLuaValue(session, deaths, interrupts, ccCoverage, performance, defensiveAudit)
   );
+  // Append pre-converted historical sessions directly — no re-analysis needed.
+  const historicalValues: LuaValue[] = (input.historicalSnapshots ?? []) as LuaValue[];
+  const sessionValues: LuaValue[] = [...currentValues, ...historicalValues];
 
   const db: Record<string, LuaValue> = {
     version: input.version,

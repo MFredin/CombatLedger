@@ -45,6 +45,8 @@ export interface SessionInsert {
   total_healing_done: number;
   cc_avg_coverage_pct: number;
   players: PlayerMetricInsert[];
+  /** JSON-serialised sessionToLuaValue output for this session. */
+  session_snapshot: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -137,6 +139,11 @@ export interface EncounterOption {
 
 export async function storeSession(session: SessionInsert): Promise<number> {
   return invoke<number>("store_session", { session });
+}
+
+/** Return the most recent `limit` session_snapshot JSON strings, newest first. */
+export async function getSessionSnapshots(limit = 19): Promise<string[]> {
+  return invoke<string[]>("get_session_snapshots", { limit });
 }
 
 export async function getSessionHistory(

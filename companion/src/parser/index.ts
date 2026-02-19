@@ -14,8 +14,9 @@ import { buildCCCoverage } from "./cc.js";
 import { buildPerformanceReport } from "./performance.js";
 import { buildDefensiveAudit } from "./defensive.js";
 import { GuidResolver } from "../enrichment/guid.js";
-import { serializeToLua } from "../serializer/savedvars.js";
+import { serializeToLua, sessionToLuaValue } from "../serializer/savedvars.js";
 import { persistAndAnalyze } from "../storage/trends.js";
+import { getSessionSnapshots } from "../storage/sqlite.js";
 import type { EncounterSession } from "./session.js";
 import type { TrendReport, DistributionReport } from "../storage/sqlite.js";
 
@@ -27,7 +28,24 @@ export interface SessionOutput {
 
 export class ParserOrchestrator {
   private segmenter = new SessionSegmenter();
-  private allSessions: EncounterSession[] = [];
+  /** Pre-converted session snapshots, newest first. Populated from SQLite on
+   *  startup and prepended after each new fight. Max 19 entries (the 20th slot
+   *  is always the live session being serialised). */
+  private historicalSnapshots: Record<string, unknown>[] = [];
+
+  /** Load the most recent sessions from SQLite so the addon immediately has
+   *  full history even after a companion restart. Call once before listening. */
+  async initialize(): Promise<void> {
+    try {
+      const raw = await getSessionSnapshots(19);
+      this.historicalSnapshots = raw
+        .filter((s) => s.length > 0)
+        .map((s) => JSON.parse(s) as Record<string, unknown>);
+      console.log(`[orchestrator] Loaded ${this.historicalSnapshots.length} historical session(s) from SQLite.`);
+    } catch (err) {
+      console.warn("[orchestrator] Failed to load historical snapshots:", err);
+    }
+  }
 
   /** Process a batch of new log lines. Returns completed sessions (if any). */
   async processLines(lines: string[]): Promise<SessionOutput[]> {
@@ -41,8 +59,6 @@ export class ParserOrchestrator {
       if (completed) {
         const output = await this.processSession(completed);
         outputs.push(output);
-        this.allSessions.unshift(completed);
-        if (this.allSessions.length > 20) this.allSessions.pop();
       }
     }
 
@@ -67,6 +83,12 @@ export class ParserOrchestrator {
     const performance = buildPerformanceReport(session, resolver, interrupts, deaths, ccCoverage);
     const defensiveAudit = buildDefensiveAudit(session, resolver, deaths);
 
+    // Build a pre-converted snapshot for this session so it can be stored in
+    // SQLite and reused as historical data in future companion runs.
+    const snapshot = sessionToLuaValue(
+      session, deaths, interrupts, ccCoverage, performance, defensiveAudit,
+    ) as Record<string, unknown>;
+
     // Phase 3: persist to SQLite and retrieve trend/distribution data.
     let sessionDbId = 0;
     let trend: TrendReport | undefined;
@@ -75,6 +97,7 @@ export class ParserOrchestrator {
     try {
       const analysis = await persistAndAnalyze(
         session, deaths, interrupts, ccCoverage, performance,
+        JSON.stringify(snapshot),
       );
       sessionDbId = analysis.sessionDbId;
       trend = analysis.trend;
@@ -84,29 +107,20 @@ export class ParserOrchestrator {
       console.warn("[orchestrator] SQLite persist failed, continuing without trends:", err);
     }
 
-    const allSessions = [session, ...this.allSessions].slice(0, 20);
+    // Serialise: current session via full analysis + up to 19 historical snapshots.
     const luaContent = serializeToLua({
       version: 4,
       generatedAt: Math.floor(Date.now() / 1000),
       companionVersion: "1.1.0",
-      sessions: allSessions.map((s, idx) => {
-        const r = new GuidResolver();
-        r.populate(s.combatants);
-        const d = idx === 0 ? deaths : buildDeathRecaps(s, r);
-        const int = idx === 0 ? interrupts : buildInterruptReport(s);
-        const cc = idx === 0 ? ccCoverage : buildCCCoverage(s);
-        return {
-          session: s,
-          deaths: d,
-          interrupts: int,
-          ccCoverage: cc,
-          performance: idx === 0 ? performance : buildPerformanceReport(s, r, int, d, cc),
-          defensiveAudit: idx === 0 ? defensiveAudit : buildDefensiveAudit(s, r, d),
-        };
-      }),
+      sessions: [{ session, deaths, interrupts, ccCoverage, performance, defensiveAudit }],
+      historicalSnapshots: this.historicalSnapshots.slice(0, 19),
       ...(trend !== undefined ? { trend } : {}),
       ...(distribution !== undefined ? { distribution } : {}),
     });
+
+    // Prepend this session's snapshot so subsequent fights in the same run
+    // also include it as history (capped at 19 to leave room for the live session).
+    this.historicalSnapshots = [snapshot, ...this.historicalSnapshots].slice(0, 19);
 
     return { session, luaContent, sessionDbId };
   }

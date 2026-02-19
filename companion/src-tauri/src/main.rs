@@ -191,6 +191,16 @@ async fn get_session_history(
         .map_err(|e| e.to_string())
 }
 
+/// Return the most recent `limit` session snapshots (JSON strings) for
+/// bootstrapping the orchestrator's history on startup.
+#[tauri::command]
+async fn get_session_snapshots(
+    limit: i64,
+    db: State<'_, Database>,
+) -> Result<Vec<String>, String> {
+    db.get_session_snapshots(limit).map_err(|e| e.to_string())
+}
+
 /// Pull-over-pull trend data for the last N sessions on a given encounter.
 #[tauri::command]
 async fn get_trend(
@@ -490,6 +500,7 @@ fn main() {
             write_session,
             store_session,
             get_session_history,
+            get_session_snapshots,
             get_trend,
             get_distribution,
             get_encounters,
