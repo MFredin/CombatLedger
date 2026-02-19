@@ -2,7 +2,7 @@
 ## Interface-Retail: 120001
 ## Title: CombatLedger
 ## Notes: Post-combat analysis — requires CombatLedger Companion app
-## Version: 1.1.0
+## Version: 1.1.1a
 ## Author: MFredin
 ## SavedVariables: CombatLedgerSettings
 ## SavedVariablesPerCharacter: CombatLedgerCharSettings

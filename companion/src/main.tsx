@@ -21,18 +21,44 @@ import "./ui/styles/global.css";
 // ---------------------------------------------------------------------------
 
 async function initLogListener(): Promise<void> {
-  // Load historical snapshots from SQLite so subsequent fights include them,
-  // and write GeneratedData.lua immediately if history exists.
+  // Load historical snapshots from SQLite so subsequent fights include them.
   await orchestrator.initialize();
-  const startupLua = orchestrator.generateStartupLua();
-  if (startupLua) {
+
+  // Write GeneratedData.lua with current history.  Can't do this inline
+  // because wow_paths is set by an async Rust background task — if we call
+  // write_session before it finishes we get "WoW paths not configured".
+  // Strategy: try immediately (works if auto-resolve was fast), then retry
+  // once the status-update event confirms WoW paths are ready.
+  let startupWriteDone = false;
+
+  async function tryStartupWrite(): Promise<void> {
+    if (startupWriteDone) return;
+    const lua = orchestrator.generateStartupLua();
+    if (!lua) return; // nothing in history yet
     try {
-      await invoke("write_session", { luaContent: startupLua });
-      console.log("[main] Wrote historical session data to GeneratedData.lua on startup.");
-    } catch (err) {
-      console.warn("[main] Startup Lua write failed:", err);
+      await invoke("write_session", { luaContent: lua });
+      startupWriteDone = true;
+      await invoke("log_activity", {
+        level: "info",
+        message: "Startup: historical session data written to GeneratedData.lua.",
+      });
+    } catch {
+      // wow_paths not ready yet; the status-update listener will retry.
     }
   }
+
+  // Best-effort immediate attempt.
+  await tryStartupWrite();
+
+  // Definitive retry once the Rust auto-resolve task confirms WoW is found.
+  await listen<string>("status-update", async (e) => {
+    if (!startupWriteDone) {
+      const s = e.payload.toLowerCase();
+      if (s.includes("watching") || s.includes("log found")) {
+        await tryStartupWrite();
+      }
+    }
+  });
 
   await listen<string[]>("log-lines", async (event) => {
     const outputs = await orchestrator.processLines(event.payload);

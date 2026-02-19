@@ -54,7 +54,7 @@ export class ParserOrchestrator {
     return serializeToLua({
       version: 4,
       generatedAt: Math.floor(Date.now() / 1000),
-      companionVersion: "1.1.0",
+      companionVersion: "1.1.1a",
       sessions: [],
       historicalSnapshots: this.historicalSnapshots,
     });
@@ -124,7 +124,7 @@ export class ParserOrchestrator {
     const luaContent = serializeToLua({
       version: 4,
       generatedAt: Math.floor(Date.now() / 1000),
-      companionVersion: "1.1.0",
+      companionVersion: "1.1.1a",
       sessions: [{ session, deaths, interrupts, ccCoverage, performance, defensiveAudit }],
       historicalSnapshots: this.historicalSnapshots.slice(0, 19),
       ...(trend !== undefined ? { trend } : {}),
