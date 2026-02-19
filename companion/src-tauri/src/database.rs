@@ -70,6 +70,16 @@ CREATE INDEX IF NOT EXISTS idx_pm_session  ON player_metrics(session_id);
 CREATE INDEX IF NOT EXISTS idx_pm_player   ON player_metrics(player_guid, session_id);
 ";
 
+const SCHEMA_V2: &str = "
+CREATE TABLE IF NOT EXISTS activity_log (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT    NOT NULL DEFAULT (datetime('now')),
+    level     TEXT    NOT NULL DEFAULT 'info',
+    message   TEXT    NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_activity_time ON activity_log(timestamp DESC);
+";
+
 // ---------------------------------------------------------------------------
 // Input types (received from TypeScript via Tauri invoke)
 // ---------------------------------------------------------------------------
@@ -236,6 +246,13 @@ impl Database {
             conn.execute_batch(SCHEMA_V1)?;
             conn.execute(
                 "INSERT INTO schema_version (version) VALUES (1)",
+                [],
+            )?;
+        }
+        if current < 2 {
+            conn.execute_batch(SCHEMA_V2)?;
+            conn.execute(
+                "INSERT INTO schema_version (version) VALUES (2)",
                 [],
             )?;
         }
@@ -549,6 +566,52 @@ impl Database {
         }
         Ok(results)
     }
+
+    /// Append a line to the activity log.
+    pub fn insert_activity(&self, level: &str, message: &str) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT INTO activity_log (level, message) VALUES (?1, ?2)",
+            params![level, message],
+        )?;
+        Ok(())
+    }
+
+    /// Return the most recent `limit` activity entries, newest first.
+    pub fn get_activity_log(&self, limit: i64) -> Result<Vec<ActivityEntry>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, timestamp, level, message
+             FROM activity_log
+             ORDER BY id DESC
+             LIMIT ?1",
+        )?;
+        let rows = stmt.query_map(params![limit], |r| {
+            Ok(ActivityEntry {
+                id: r.get(0)?,
+                timestamp: r.get(1)?,
+                level: r.get(2)?,
+                message: r.get(3)?,
+            })
+        })?;
+        let mut results = Vec::new();
+        for row in rows {
+            results.push(row?);
+        }
+        Ok(results)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Activity log
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Serialize, Clone)]
+pub struct ActivityEntry {
+    pub id: i64,
+    pub timestamp: String,
+    pub level: String,
+    pub message: String,
 }
 
 // ---------------------------------------------------------------------------

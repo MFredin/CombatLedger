@@ -88,7 +88,7 @@ export class ParserOrchestrator {
     const luaContent = serializeToLua({
       version: 4,
       generatedAt: Math.floor(Date.now() / 1000),
-      companionVersion: "0.4.0",
+      companionVersion: "1.1.0",
       sessions: allSessions.map((s, idx) => {
         const r = new GuidResolver();
         r.populate(s.combatants);

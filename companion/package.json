@@ -1,6 +1,6 @@
 {
   "name": "combatledger-companion",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,11 +12,18 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
-    "@tauri-apps/plugin-shell": "^2"
+    "@tauri-apps/plugin-shell": "^2",
+    "chart.js": "^4",
+    "react": "^18",
+    "react-chartjs-2": "^5",
+    "react-dom": "^18"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
     "@types/node": "^22",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@vitejs/plugin-react": "^4",
     "typescript": "^5.0.0",
     "vite": "^5",
     "vitest": "latest"
