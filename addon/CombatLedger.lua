@@ -49,7 +49,7 @@ function addon:SlashCommand(input)
         CombatLedgerDB = nil
         self:Print("CombatLedger data cleared. Run a dungeon and /reload to populate.")
     elseif cmd == "version" then
-        self:Print("CombatLedger v1.1.1")
+        self:Print("CombatLedger v1.1.2")
     elseif cmd == "refresh" then
         StaticPopup_Show("COMBATLEDGER_RELOAD_CONFIRM")
     elseif cmd == "" or cmd == "open" then
