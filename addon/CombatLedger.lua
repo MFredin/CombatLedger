@@ -22,6 +22,19 @@ function addon:OnInitialize()
 
     self:RegisterChatCommand("cl", "SlashCommand")
     self:RegisterChatCommand("combatledger", "SlashCommand")
+
+    -- Confirmation popup shown by the "Reload Data" button and /cl refresh.
+    -- ReloadUI() is a standard Blizzard API call used by many addons.
+    StaticPopupDialogs["COMBATLEDGER_RELOAD_CONFIRM"] = {
+        text = "Reload the UI to fetch the latest data from CombatLedger Companion?\n\n|cff7888a0This is equivalent to typing /reload.|r",
+        button1 = "Reload",
+        button2 = "Cancel",
+        OnAccept = function() ReloadUI() end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3,
+    }
 end
 
 function addon:OnEnable()
@@ -37,9 +50,11 @@ function addon:SlashCommand(input)
         self:Print("CombatLedger data cleared. Run a dungeon and /reload to populate.")
     elseif cmd == "version" then
         self:Print("CombatLedger v1.1.0")
+    elseif cmd == "refresh" then
+        StaticPopup_Show("COMBATLEDGER_RELOAD_CONFIRM")
     elseif cmd == "" or cmd == "open" then
         CL.Frame:Toggle()
     else
-        self:Print("Unknown command. Usage: /cl [open|reset|version]")
+        self:Print("Unknown command. Usage: /cl [open|reset|version|refresh]")
     end
 end

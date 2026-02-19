@@ -255,8 +255,37 @@ function Frame:Init()
     verLabel:SetTextColor(C.textMuted.r, C.textMuted.g, C.textMuted.b)
     verLabel:SetText("CombatLedger v1.1.0  ·  Requires Companion ≥ 1.1.0")
 
+    -- "Reload Data" button — shows a confirmation popup then calls ReloadUI().
+    -- Anchored to the far right; companionStatus sits to its left.
+    local reloadBtn = CreateFrame("Button", nil, bottomBar)
+    reloadBtn:SetSize(106, 20)
+    reloadBtn:SetPoint("RIGHT", bottomBar, "RIGHT", -10, 0)
+
+    local rBg = reloadBtn:CreateTexture(nil, "BACKGROUND")
+    rBg:SetAllPoints(reloadBtn)
+    rBg:SetColorTexture(C.borderSub.r, C.borderSub.g, C.borderSub.b)
+
+    local rLbl = reloadBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    rLbl:SetAllPoints(reloadBtn)
+    rLbl:SetJustifyH("CENTER")
+    rLbl:SetText("↻  RELOAD DATA")
+    rLbl:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b)
+
+    reloadBtn:SetScript("OnClick", function()
+        StaticPopup_Show("COMBATLEDGER_RELOAD_CONFIRM")
+    end)
+    reloadBtn:SetScript("OnEnter", function()
+        rBg:SetColorTexture(C.hover.r, C.hover.g, C.hover.b)
+        rLbl:SetTextColor(C.gold.r, C.gold.g, C.gold.b)
+    end)
+    reloadBtn:SetScript("OnLeave", function()
+        rBg:SetColorTexture(C.borderSub.r, C.borderSub.g, C.borderSub.b)
+        rLbl:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b)
+    end)
+    self.reloadBtn = reloadBtn
+
     self.companionStatus = bottomBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    self.companionStatus:SetPoint("RIGHT", bottomBar, "RIGHT", -12, 0)
+    self.companionStatus:SetPoint("RIGHT", reloadBtn, "LEFT", -12, 0)
     self.companionStatus:SetTextColor(C.textMuted.r, C.textMuted.g, C.textMuted.b)
     self.companionStatus:SetText("NO COMPANION DATA")
 

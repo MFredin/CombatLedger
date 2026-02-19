@@ -755,11 +755,62 @@ select option {
 .update-banner__dismiss:hover { color: var(--text-primary); }
 
 /* ============================================================================
-   Import Log button (tab bar) + import progress / summary banner
+   Sync to WoW + Import Log buttons (tab bar right cluster)
    ============================================================================ */
 
-.tab-bar__import-btn {
+/* Sync button — margin-left: auto pushes the whole right cluster to the edge */
+.tab-bar__sync-btn {
   margin-left: auto;
+  align-self: center;
+  padding: 0 12px;
+  height: 26px;
+  min-width: 88px;
+  background: transparent;
+  border: 1px solid var(--border-visible);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color var(--transition), color var(--transition);
+  flex-shrink: 0;
+}
+
+.tab-bar__sync-btn:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.tab-bar__sync-btn--syncing {
+  border-color: var(--blue-dim);
+  color: var(--blue);
+  opacity: 0.8;
+}
+
+.tab-bar__sync-btn--ok {
+  border-color: var(--green-dim);
+  color: var(--green);
+}
+
+.tab-bar__sync-btn--error {
+  border-color: var(--red-dim);
+  color: var(--red);
+}
+
+.tab-bar__sync-btn--no-history {
+  border-color: var(--border-subtle);
+  color: var(--text-muted);
+}
+
+.tab-bar__sync-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tab-bar__import-btn {
+  margin-left: 6px; /* gap between sync + import; sync provides the auto-margin */
   align-self: center;
   padding: 0 12px;
   height: 26px;
