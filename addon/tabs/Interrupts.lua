@@ -102,6 +102,7 @@ local function buildRow(parent, ev, yOffset, rowIndex)
 
     -- Status badge (col 5)
     local status = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    status:SetFont("Fonts\\ARIALN.TTF", 11)
     status:SetPoint("LEFT", row, "LEFT", x, 0)
     if ev.wasInterrupted then
         local sc = STATUS_KICKED
@@ -168,13 +169,8 @@ function Interrupts:Render(parent)
 
     local summary = report.summary or {}
 
-    local scrollFrame = CreateFrame("ScrollFrame", nil, parent, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetAllPoints(parent)
+    local scrollFrame, content = CL.Frame:MakeScrollable(parent)
     self.scrollFrame = scrollFrame
-
-    local content = CreateFrame("Frame", nil, scrollFrame)
-    content:SetWidth(parent:GetWidth() - 28)
-    scrollFrame:SetScrollChild(content)
 
     -- Summary line
     local sumLine = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")

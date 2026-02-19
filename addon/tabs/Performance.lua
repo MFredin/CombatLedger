@@ -138,6 +138,7 @@ local function buildPlayerRow(parent, p, yOffset, rowIndex)
 
     -- Deaths (red = bad)
     local deathFs = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    deathFs:SetFont("Fonts\\ARIALN.TTF", 11)
     deathFs:SetWidth(50)
     deathFs:SetPoint("LEFT", row, "LEFT", 448, 0)
     local deathCount = p.deathCount or 0
@@ -208,6 +209,7 @@ local function buildDefensiveSection(content, defensiveAudit, yOffset)
 
             for _, missed in ipairs(playerAudit.missedAtDeath) do
                 local missedLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                missedLabel:SetFont("Fonts\\ARIALN.TTF", 11)
                 missedLabel:SetPoint("TOPLEFT", content, "TOPLEFT", 20, yOffset)
                 local sinceStr = missed.secSinceLastUse
                     and string.format("(last used %.0fs ago)", missed.secSinceLastUse)
@@ -219,6 +221,7 @@ local function buildDefensiveSection(content, defensiveAudit, yOffset)
             -- Phase 3.5: missed external defensives (e.g. Ironbark available but unused)
             for _, ext in ipairs(playerAudit.missedExternals or {}) do
                 local extLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                extLabel:SetFont("Fonts\\ARIALN.TTF", 11)
                 extLabel:SetPoint("TOPLEFT", content, "TOPLEFT", 20, yOffset)
                 local sinceStr = ext.secSinceLastUse
                     and string.format("(last cast %.0fs ago)", ext.secSinceLastUse)
@@ -270,13 +273,8 @@ function Performance:Render(parent)
     end
 
     -- Scroll container
-    local scrollFrame = CreateFrame("ScrollFrame", nil, parent, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetAllPoints(parent)
+    local scrollFrame, content = CL.Frame:MakeScrollable(parent)
     self.scrollFrame = scrollFrame
-
-    local content = CreateFrame("Frame", nil, scrollFrame)
-    content:SetWidth(parent:GetWidth() - 28)
-    scrollFrame:SetScrollChild(content)
 
     -- Encounter summary
     local hdr = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")

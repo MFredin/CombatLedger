@@ -177,6 +177,7 @@ function Overview:Render(parent)
         local noneFs = leftCol:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         noneFs:SetPoint("TOPLEFT", leftCol, "TOPLEFT", 0, rowY)
         noneFs:SetTextColor(C.textMuted.r, C.textMuted.g, C.textMuted.b)
+        noneFs:SetFont("Fonts\\ARIALN.TTF", 12)
         noneFs:SetText("No deaths this pull  ✓")
         noneFs:SetTextColor(C.green.r, C.green.g, C.green.b)
     else

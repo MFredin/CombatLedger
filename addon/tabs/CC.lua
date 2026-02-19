@@ -102,6 +102,7 @@ local function buildFilterToggle(parent, yOffset, onToggle)
     bgTex:SetColorTexture(0.15, 0.15, 0.18, 1)
 
     local lbl = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    lbl:SetFont("Fonts\\ARIALN.TTF", 11)
     lbl:SetAllPoints(btn)
 
     local function refresh()
@@ -154,6 +155,7 @@ local function buildTargetRow(parent, cc, yOffset, sessionStartTime)
     -- Wasted (immune) count
     if (cc.wastedCasts or 0) > 0 then
         local wastedLabel = rowFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        wastedLabel:SetFont("Fonts\\ARIALN.TTF", 11)
         wastedLabel:SetWidth(100)
         wastedLabel:SetPoint("TOPLEFT", rowFrame, "TOPLEFT", 212, -4)
         wastedLabel:SetTextColor(0.91, 0.25, 0.25)
@@ -255,13 +257,8 @@ function CC:Render(parent)
     local sessionStartTime = session.startTime or 0
 
     -- Scroll container
-    local scrollFrame = CreateFrame("ScrollFrame", nil, parent, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetAllPoints(parent)
+    local scrollFrame, content = CL.Frame:MakeScrollable(parent)
     self.scrollFrame = scrollFrame
-
-    local content = CreateFrame("Frame", nil, scrollFrame)
-    content:SetWidth(parent:GetWidth() - 28)
-    scrollFrame:SetScrollChild(content)
 
     -- Encounter header
     local hdr = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
