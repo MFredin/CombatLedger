@@ -312,7 +312,7 @@ async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
         .map_err(|e| e.to_string())?;
     if let Some(update) = update {
         update
-            .download_and_install(|_event| {}, || {})
+            .download_and_install(|_chunk, _total| {}, || {})
             .await
             .map_err(|e| e.to_string())?;
     }
