@@ -2,9 +2,13 @@
  * guid.ts — GUID → player name/class resolution
  *
  * Builds a map from COMBATANT_INFO events collected during session segmentation.
+ * COMBATANT_INFO does not carry a player name — only a GUID — so names are
+ * backfilled separately by scanning regular combat events (which always carry
+ * the real player name as sourceName / destName).
  */
 
 import type { CombatantInfo } from "../parser/session.js";
+import type { ParsedEvent } from "../parser/cleu.js";
 
 export interface PlayerInfo {
   guid: string;
@@ -84,6 +88,46 @@ export class GuidResolver {
         spec: specInfo.spec,
         specId: c.specId,
       });
+    }
+  }
+
+  /**
+   * Back-fill real player names by scanning combat events.
+   *
+   * COMBATANT_INFO events do not carry a player name, so populate() stores the
+   * GUID as a placeholder.  Every regular CLEU event (SPELL_DAMAGE, UNIT_DIED,
+   * etc.) does carry the real name as sourceName / destName.  This method scans
+   * those events and overwrites any entry whose name is still the placeholder
+   * GUID with the real name found in the log.
+   *
+   * Call this once after populate() and before any analysis engines run, so
+   * that all downstream consumers (deaths, defensives, performance) see correct
+   * names without each needing its own resolution logic.
+   */
+  populateNamesFromEvents(events: ParsedEvent[]): void {
+    for (const ev of events) {
+      // Use optional-property access — non-base events (ENCOUNTER_START etc.)
+      // don't have source/dest fields and will simply produce undefined here.
+      const b = ev as Partial<{
+        sourceGUID: string;
+        sourceName: string;
+        destGUID: string;
+        destName: string;
+      }>;
+
+      if (b.sourceGUID && b.sourceName && b.sourceName !== b.sourceGUID) {
+        const info = this.map.get(b.sourceGUID);
+        if (info && info.name === info.guid) {
+          this.map.set(b.sourceGUID, { ...info, name: b.sourceName });
+        }
+      }
+
+      if (b.destGUID && b.destName && b.destName !== b.destGUID) {
+        const info = this.map.get(b.destGUID);
+        if (info && info.name === info.guid) {
+          this.map.set(b.destGUID, { ...info, name: b.destName });
+        }
+      }
     }
   }
 

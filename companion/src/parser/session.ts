@@ -77,9 +77,12 @@ export class SessionSegmenter {
 
       case "COMBATANT_INFO": {
         const c = event as CombatantInfoEvent;
+        // COMBATANT_INFO does not carry a player name — only a GUID.
+        // We store the GUID as a placeholder; GuidResolver.populateNamesFromEvents()
+        // overwrites it with the real name once the session's combat events are available.
         this.currentCombatants.push({
           guid: c.playerGUID,
-          name: c.playerGUID, // Name resolved later via GUID lookup
+          name: c.playerGUID,
           specId: c.currentSpecId,
         });
         return null;

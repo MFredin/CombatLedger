@@ -89,6 +89,10 @@ export class ParserOrchestrator {
   private async processSession(session: EncounterSession): Promise<SessionOutput> {
     const resolver = new GuidResolver();
     resolver.populate(session.combatants);
+    // COMBATANT_INFO events carry no player name — only a GUID.  Back-fill
+    // real names from the combat events that followed (every CLEU event that
+    // has a source/dest carries the name as a plain string in the log line).
+    resolver.populateNamesFromEvents(session.events);
 
     const deaths = buildDeathRecaps(session, resolver);
     const interrupts = buildInterruptReport(session);
