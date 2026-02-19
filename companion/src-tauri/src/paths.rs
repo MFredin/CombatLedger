@@ -85,9 +85,34 @@ pub fn discover_account_names(wow_root: &Path) -> Result<Vec<String>> {
     Ok(names)
 }
 
+/// Find the most recently modified WoWCombatLog*.txt in the Logs directory.
+/// Falls back to the canonical name so callers always get a valid (if non-existent) path.
+fn find_latest_combat_log(logs_dir: &Path) -> PathBuf {
+    let fallback = logs_dir.join("WoWCombatLog.txt");
+    let Ok(entries) = std::fs::read_dir(logs_dir) else {
+        return fallback;
+    };
+    let mut best: Option<(PathBuf, std::time::SystemTime)> = None;
+    for entry in entries.flatten() {
+        let name = entry.file_name();
+        let name_str = name.to_string_lossy();
+        if name_str.starts_with("WoWCombatLog") && name_str.ends_with(".txt") {
+            if let Ok(meta) = entry.metadata() {
+                if let Ok(modified) = meta.modified() {
+                    if best.as_ref().map_or(true, |(_, t)| modified > *t) {
+                        best = Some((entry.path(), modified));
+                    }
+                }
+            }
+        }
+    }
+    best.map(|(p, _)| p).unwrap_or(fallback)
+}
+
 /// Build the full WowPaths structure given a wow root and selected account name.
 pub fn build_paths(wow_root: PathBuf, account_name: String) -> WowPaths {
-    let combat_log = wow_root.join("Logs").join("WoWCombatLog.txt");
+    let logs_dir = wow_root.join("Logs");
+    let combat_log = find_latest_combat_log(&logs_dir);
     let saved_variables = wow_root
         .join("WTF")
         .join("Account")

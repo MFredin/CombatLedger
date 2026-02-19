@@ -6,26 +6,71 @@ use std::sync::mpsc;
 use std::time::Duration;
 use tokio::sync::mpsc as tokio_mpsc;
 
-/// A lightweight tail watcher for WoWCombatLog.txt.
+/// A lightweight tail watcher for WoWCombatLog*.txt.
 /// Delivers new lines to a tokio channel as they arrive.
+/// Watches the Logs directory and dynamically tracks the newest
+/// WoWCombatLog*.txt file, handling both timestamped names and log rotation.
 pub struct LogWatcher {
-    path: PathBuf,
-    /// Last known file size / byte offset; resets on log rotation.
+    /// The Logs directory to scan for log files.
+    logs_dir: PathBuf,
+    /// The file currently being tailed (may change if WoW creates a new session file).
+    current_path: Option<PathBuf>,
+    /// Last known file size / byte offset; resets on log rotation or file switch.
     last_position: u64,
 }
 
 impl LogWatcher {
+    /// `path` is the initial combat log path from `WowPaths`; only the parent
+    /// directory is used so the watcher can discover timestamped files like
+    /// `WoWCombatLog-021926_125113.txt` automatically.
     pub fn new(path: PathBuf) -> Self {
+        let logs_dir = path
+            .parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_else(|| PathBuf::from("."));
         Self {
-            path,
+            logs_dir,
+            current_path: None,
             last_position: 0,
         }
     }
 
+    /// Scan the Logs directory for the newest WoWCombatLog*.txt file.
+    fn find_latest_log(&self) -> Option<PathBuf> {
+        let entries = std::fs::read_dir(&self.logs_dir).ok()?;
+        let mut best: Option<(PathBuf, std::time::SystemTime)> = None;
+        for entry in entries.flatten() {
+            let name = entry.file_name();
+            let name_str = name.to_string_lossy();
+            if name_str.starts_with("WoWCombatLog") && name_str.ends_with(".txt") {
+                if let Ok(meta) = entry.metadata() {
+                    if let Ok(modified) = meta.modified() {
+                        if best.as_ref().map_or(true, |(_, t)| modified > *t) {
+                            best = Some((entry.path(), modified));
+                        }
+                    }
+                }
+            }
+        }
+        best.map(|(p, _)| p)
+    }
+
     /// Read any bytes written since `last_position`, split into lines, and
-    /// advance the position.  Returns the new lines (without trailing newlines).
+    /// advance the position.  Automatically switches to a newer log file if
+    /// WoW creates a new session file (e.g. after a relog).
     fn read_new_lines(&mut self) -> Result<Vec<String>> {
-        let mut file = std::fs::File::open(&self.path)?;
+        let latest = match self.find_latest_log() {
+            Some(p) => p,
+            None => return Ok(vec![]),
+        };
+
+        // Switch to the newer file and reset the position.
+        if self.current_path.as_deref() != Some(latest.as_path()) {
+            self.current_path = Some(latest.clone());
+            self.last_position = 0;
+        }
+
+        let mut file = std::fs::File::open(&latest)?;
         let metadata = file.metadata()?;
         let file_size = metadata.len();
 
@@ -70,15 +115,13 @@ impl LogWatcher {
             }
         };
 
-        // Watch the parent directory in case the file doesn't exist yet.
-        let watch_dir = self
-            .path
-            .parent()
-            .map(|p| p.to_path_buf())
-            .unwrap_or_else(|| PathBuf::from("."));
-
-        if let Err(e) = watcher.watch(&watch_dir, RecursiveMode::NonRecursive) {
-            eprintln!("[watcher] Failed to watch directory {}: {e}", watch_dir.display());
+        // Watch the Logs directory — catches both modifications to existing files
+        // and creation of new timestamped log files.
+        if let Err(e) = watcher.watch(&self.logs_dir, RecursiveMode::NonRecursive) {
+            eprintln!(
+                "[watcher] Failed to watch directory {}: {e}",
+                self.logs_dir.display()
+            );
             return;
         }
 
@@ -86,7 +129,7 @@ impl LogWatcher {
             // Block briefly waiting for a notify event.
             match notify_rx.recv_timeout(Duration::from_millis(500)) {
                 Ok(Ok(Event { kind, .. })) => {
-                    // We only care about Modify events (WoW appends to the file).
+                    // We only care about Modify/Create events (WoW appends to the file).
                     if !matches!(kind, EventKind::Modify(_) | EventKind::Create(_)) {
                         continue;
                     }
@@ -99,10 +142,6 @@ impl LogWatcher {
                     // Poll even on timeout to catch any missed events.
                 }
                 Err(mpsc::RecvTimeoutError::Disconnected) => break,
-            }
-
-            if !self.path.exists() {
-                continue;
             }
 
             match self.read_new_lines() {
