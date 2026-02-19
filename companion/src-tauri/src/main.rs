@@ -7,7 +7,7 @@ mod watcher;
 mod writer;
 
 use anyhow::Result;
-use database::{Database, DistributionReport, EncounterOption, SessionInsert, SessionSummary, TrendReport};
+use database::{ActivityEntry, Database, DistributionReport, EncounterOption, SessionInsert, SessionSummary, TrendReport};
 use paths::WowPaths;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -37,11 +37,51 @@ impl Default for AppConfig {
     }
 }
 
+/// Persisted startup/launch preferences (stored as JSON in app-data).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LaunchConfig {
+    /// True only on the very first run; cleared after the window is shown once.
+    pub first_launch: bool,
+    /// Whether to register this app in the OS autostart registry.
+    pub launch_at_startup: bool,
+    /// When launching at startup, stay hidden in the tray (true) or show the
+    /// window immediately (false).
+    pub startup_minimized: bool,
+}
+
+impl Default for LaunchConfig {
+    fn default() -> Self {
+        Self {
+            first_launch: true,
+            launch_at_startup: false,
+            startup_minimized: true,
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct AppState {
     pub config: AppConfig,
+    pub launch_config: LaunchConfig,
     pub wow_paths: Option<WowPaths>,
     pub status: String,
+}
+
+// ---------------------------------------------------------------------------
+// Launch-config persistence helpers
+// ---------------------------------------------------------------------------
+
+fn load_launch_config(path: &std::path::Path) -> LaunchConfig {
+    std::fs::read_to_string(path)
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or_default()
+}
+
+fn save_launch_config(path: &std::path::Path, cfg: &LaunchConfig) {
+    if let Ok(json) = serde_json::to_string_pretty(cfg) {
+        let _ = std::fs::write(path, json);
+    }
 }
 
 type SharedState = Arc<Mutex<AppState>>;
@@ -177,6 +217,60 @@ async fn get_encounters(db: State<'_, Database>) -> Result<Vec<EncounterOption>,
 }
 
 // ---------------------------------------------------------------------------
+// Tauri commands — launch config & activity log
+// ---------------------------------------------------------------------------
+
+#[tauri::command]
+async fn get_launch_config(state: State<'_, SharedState>) -> Result<LaunchConfig, String> {
+    let s = state.lock().await;
+    Ok(s.launch_config.clone())
+}
+
+#[tauri::command]
+async fn set_launch_config(
+    launch_at_startup: bool,
+    startup_minimized: bool,
+    state: State<'_, SharedState>,
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    use tauri_plugin_autostart::ManagerExt;
+    let mut s = state.lock().await;
+    s.launch_config.launch_at_startup = launch_at_startup;
+    s.launch_config.startup_minimized = startup_minimized;
+
+    let cfg_path = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join("launch_config.json");
+    save_launch_config(&cfg_path, &s.launch_config);
+
+    if launch_at_startup {
+        app.autolaunch().enable().map_err(|e| e.to_string())?;
+    } else {
+        app.autolaunch().disable().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+async fn log_activity(
+    level: String,
+    message: String,
+    db: State<'_, Database>,
+) -> Result<(), String> {
+    db.insert_activity(&level, &message).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn get_activity_log(
+    limit: i64,
+    db: State<'_, Database>,
+) -> Result<Vec<ActivityEntry>, String> {
+    db.get_activity_log(limit).map_err(|e| e.to_string())
+}
+
+// ---------------------------------------------------------------------------
 // Main entry point
 // ---------------------------------------------------------------------------
 
@@ -192,17 +286,45 @@ fn main() {
         .manage(shared_state.clone())
         .setup(move |app| {
             // Initialise SQLite database in the Tauri app-data directory.
-            let db_path = app
+            let data_dir = app
                 .path()
                 .app_data_dir()
-                .expect("Failed to resolve app data dir")
-                .join("combatledger.db");
+                .expect("Failed to resolve app data dir");
+            std::fs::create_dir_all(&data_dir).ok();
 
-            if let Some(parent) = db_path.parent() {
-                std::fs::create_dir_all(parent).ok();
+            let db_path = data_dir.join("combatledger.db");
+            let database = Database::new(db_path).expect("Failed to open SQLite database");
+
+            // ----------------------------------------------------------------
+            // Launch config — load, apply window-visibility logic, persist.
+            // ----------------------------------------------------------------
+            let cfg_path = data_dir.join("launch_config.json");
+            let mut launch_config = load_launch_config(&cfg_path);
+            let is_first_launch = launch_config.first_launch;
+            let startup_minimized = launch_config.startup_minimized;
+
+            if is_first_launch {
+                launch_config.first_launch = false;
+                save_launch_config(&cfg_path, &launch_config);
             }
 
-            let database = Database::new(db_path).expect("Failed to open SQLite database");
+            // Show the main window unless we were started by the OS autostart
+            // mechanism AND the user wants a tray-only startup.
+            let launched_minimized = std::env::args().any(|a| a == "--minimized");
+            let should_show = is_first_launch || !launched_minimized || !startup_minimized;
+            if should_show {
+                if let Some(win) = app.get_webview_window("main") {
+                    let _ = win.show();
+                    let _ = win.set_focus();
+                }
+            }
+
+            // Populate shared state with the loaded launch config.
+            {
+                let mut s = shared_state.blocking_lock();
+                s.launch_config = launch_config;
+            }
+
             app.manage(database);
 
             let handle = app.handle().clone();
@@ -213,14 +335,27 @@ fn main() {
                 let mut s = state_clone.lock().await;
                 match paths::auto_resolve() {
                     Ok(wow_paths) => {
-                        s.status = if wow_paths.combat_log.exists() {
-                            "WoW log found ✓".to_string()
+                        let log_exists = wow_paths.combat_log.exists();
+                        s.status = if log_exists {
+                            "Watching — WoW log found".to_string()
                         } else {
-                            "Log not found".to_string()
+                            "WoW found — log not yet created".to_string()
                         };
                         s.config.wow_root =
                             Some(wow_paths.wow_root.to_string_lossy().into_owned());
                         s.config.account_name = Some(wow_paths.account_name.clone());
+
+                        let db = handle.state::<Database>();
+                        let _ = db.insert_activity(
+                            "info",
+                            &format!("CombatLedger started — account: {}", wow_paths.account_name),
+                        );
+                        if log_exists {
+                            let _ = db.insert_activity("info", "Combat log found, watcher active");
+                        } else {
+                            let _ = db.insert_activity("warn", "Combat log not yet present — enter a zone to create it");
+                        }
+                        let _ = handle.emit("status-update", s.status.clone());
 
                         // Spawn the log watcher.
                         let log_path = wow_paths.combat_log.clone();
@@ -242,7 +377,10 @@ fn main() {
                         s.wow_paths = Some(wow_paths);
                     }
                     Err(e) => {
-                        s.status = format!("Setup required: {e}");
+                        s.status = "Setup required — WoW path not found".to_string();
+                        let db = handle.state::<Database>();
+                        let _ = db.insert_activity("warn", &format!("Auto-resolve failed: {e} — manual setup required"));
+                        let _ = handle.emit("status-update", s.status.clone());
                         // Open settings window so user can manually set path.
                         if let Some(win) = handle.get_webview_window("settings") {
                             let _ = win.show();
@@ -303,6 +441,10 @@ fn main() {
             get_trend,
             get_distribution,
             get_encounters,
+            get_launch_config,
+            set_launch_config,
+            log_activity,
+            get_activity_log,
         ])
         .run(tauri::generate_context!())
         .expect("error while running CombatLedger companion");
