@@ -146,6 +146,11 @@ export async function getSessionSnapshots(limit = 19): Promise<string[]> {
   return invoke<string[]>("get_session_snapshots", { limit });
 }
 
+/** Return true if a session with the given encounter + start_time already exists. */
+export async function sessionExists(encounterId: number, startTime: number): Promise<boolean> {
+  return invoke<boolean>("session_exists", { encounterId, startTime });
+}
+
 export async function getSessionHistory(
   encounterId?: number,
   difficulty?: number,

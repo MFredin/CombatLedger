@@ -201,6 +201,85 @@ async fn get_session_snapshots(
     db.get_session_snapshots(limit).map_err(|e| e.to_string())
 }
 
+/// Return true if a session with this encounter_id + start_time already exists.
+/// Used for deduplication when importing historical combat logs.
+#[tauri::command]
+async fn session_exists(
+    encounter_id: i64,
+    start_time: i64,
+    db: State<'_, Database>,
+) -> Result<bool, String> {
+    db.session_exists(encounter_id, start_time).map_err(|e| e.to_string())
+}
+
+/// Open a native OS file-picker filtered to .txt files and return the chosen path.
+/// Returns null if the user cancels.
+#[tauri::command]
+async fn pick_log_file() -> Result<Option<String>, String> {
+    let handle = rfd::AsyncFileDialog::new()
+        .add_filter("WoW Combat Log", &["txt"])
+        .set_title("Select WoW Combat Log")
+        .pick_file()
+        .await;
+    Ok(handle.map(|f| f.path().to_string_lossy().into_owned()))
+}
+
+/// Read a combat-log file line by line, emitting batches via the "import-lines"
+/// event.  Returns immediately — streaming happens in a background task.
+/// Emits "import-done" when the file is fully read (or on error).
+#[tauri::command]
+async fn start_log_import(
+    path: String,
+    app_handle: tauri::AppHandle,
+) -> Result<(), String> {
+    tokio::spawn(async move {
+        use std::io::BufRead;
+
+        let file = match std::fs::File::open(&path) {
+            Ok(f) => f,
+            Err(e) => {
+                eprintln!("[import] Cannot open {path}: {e}");
+                let _ = app_handle.emit("import-done", ());
+                return;
+            }
+        };
+        let total_bytes = file.metadata().map(|m| m.len()).unwrap_or(0);
+        let reader = std::io::BufReader::new(file);
+
+        let mut batch: Vec<String> = Vec::with_capacity(1000);
+        let mut bytes_read: u64 = 0;
+
+        for line in reader.lines() {
+            let line = match line {
+                Ok(l) => l,
+                Err(_) => break,
+            };
+            bytes_read += line.len() as u64 + 1; // +1 for newline
+            batch.push(line);
+
+            if batch.len() >= 1000 {
+                let _ = app_handle.emit("import-lines", serde_json::json!({
+                    "lines": batch,
+                    "bytesRead": bytes_read,
+                    "totalBytes": total_bytes,
+                }));
+                batch = Vec::with_capacity(1000);
+            }
+        }
+
+        if !batch.is_empty() {
+            let _ = app_handle.emit("import-lines", serde_json::json!({
+                "lines": batch,
+                "bytesRead": bytes_read,
+                "totalBytes": total_bytes,
+            }));
+        }
+
+        let _ = app_handle.emit("import-done", ());
+    });
+    Ok(())
+}
+
 /// Pull-over-pull trend data for the last N sessions on a given encounter.
 #[tauri::command]
 async fn get_trend(
@@ -501,6 +580,9 @@ fn main() {
             store_session,
             get_session_history,
             get_session_snapshots,
+            session_exists,
+            pick_log_file,
+            start_log_import,
             get_trend,
             get_distribution,
             get_encounters,

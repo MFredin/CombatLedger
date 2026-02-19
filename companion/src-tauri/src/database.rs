@@ -369,6 +369,18 @@ impl Database {
         Ok(results)
     }
 
+    /// Return true if a session with this encounter_id + start_time already exists.
+    /// Used for deduplication during manual log imports.
+    pub fn session_exists(&self, encounter_id: i64, start_time: i64) -> Result<bool> {
+        let conn = self.conn.lock().unwrap();
+        let count: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM sessions WHERE encounter_id = ?1 AND start_time = ?2",
+            params![encounter_id, start_time],
+            |r| r.get(0),
+        )?;
+        Ok(count > 0)
+    }
+
     /// Return the `session_snapshot` JSON blobs for the most recent `limit` sessions,
     /// newest first.  Empty strings (pre-migration rows) are excluded.
     pub fn get_session_snapshots(&self, limit: i64) -> Result<Vec<String>> {

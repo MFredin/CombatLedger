@@ -4,10 +4,13 @@ import { invoke } from "@tauri-apps/api/core";
 import ActivityTab from "./tabs/ActivityTab.js";
 import HistoryTab from "./tabs/HistoryTab.js";
 import TrendsTab from "./tabs/TrendsTab.js";
+import { importLogFile } from "../parser/importer.js";
+import type { ImportProgress, ImportSummary } from "../parser/importer.js";
 
 type Tab = "activity" | "history" | "trends";
 type UpdateStatus = "idle" | "available" | "downloading" | "error";
 type UpdateInfo = { version: string; notes: string };
+type ImportStatus = "idle" | "running" | "done";
 
 function statusToDotClass(status: string): string {
   const s = status.toLowerCase();
@@ -22,6 +25,9 @@ export default function App(): React.ReactElement {
   const [status, setStatus] = useState<string>("Connecting…");
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>("idle");
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [importStatus, setImportStatus] = useState<ImportStatus>("idle");
+  const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
+  const [importSummary, setImportSummary] = useState<ImportSummary | null>(null);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -66,6 +72,25 @@ export default function App(): React.ReactElement {
     }
   }
 
+  async function handleImport() {
+    setImportStatus("running");
+    setImportProgress(null);
+    setImportSummary(null);
+    try {
+      const result = await importLogFile((p) => setImportProgress(p));
+      if (result === null) {
+        // User cancelled the file picker.
+        setImportStatus("idle");
+      } else {
+        setImportSummary(result);
+        setImportStatus("done");
+      }
+    } catch (err) {
+      console.error("[import] Failed:", err);
+      setImportStatus("idle");
+    }
+  }
+
   const dotClass = `tab-bar__logo-dot tab-bar__logo-dot--${statusToDotClass(status)}`;
 
   return (
@@ -92,6 +117,15 @@ export default function App(): React.ReactElement {
             {label}
           </button>
         ))}
+
+        <button
+          className="tab-bar__import-btn"
+          onClick={handleImport}
+          disabled={importStatus === "running"}
+          title="Import a WoW combat log file to backfill history"
+        >
+          {importStatus === "running" ? "Importing…" : "Import Log"}
+        </button>
       </div>
 
       {/* ── Update banner ───────────────────────────────────────────── */}
@@ -126,6 +160,46 @@ export default function App(): React.ReactElement {
           <button
             className="update-banner__dismiss"
             onClick={() => setUpdateStatus("idle")}
+            title="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* ── Import progress / summary banner ────────────────────────── */}
+      {importStatus === "running" && (
+        <div className="import-banner">
+          <span className="import-banner__text">
+            {importProgress
+              ? `Analysing… ${importProgress.totalBytes > 0
+                  ? Math.round((importProgress.bytesRead / importProgress.totalBytes) * 100)
+                  : "?"}% — ${importProgress.sessionsFound} session${importProgress.sessionsFound !== 1 ? "s" : ""} found`
+              : "Starting import…"}
+          </span>
+          {importProgress && importProgress.totalBytes > 0 && (
+            <div className="import-progress">
+              <div
+                className="import-progress__bar"
+                style={{
+                  width: `${Math.round((importProgress.bytesRead / importProgress.totalBytes) * 100)}%`,
+                }}
+              />
+            </div>
+          )}
+        </div>
+      )}
+      {importStatus === "done" && importSummary && (
+        <div className="import-banner import-banner--done">
+          <span className="import-banner__icon">✓</span>
+          <span className="import-banner__text">
+            Import complete — {importSummary.sessionsImported} session{importSummary.sessionsImported !== 1 ? "s" : ""} imported
+            {importSummary.sessionsSkipped > 0 && `, ${importSummary.sessionsSkipped} skipped (already in database)`}.
+            {" "}Do a <code>/reload</code> in WoW to see the updated history.
+          </span>
+          <button
+            className="import-banner__dismiss"
+            onClick={() => { setImportStatus("idle"); setImportSummary(null); }}
             title="Dismiss"
           >
             ✕
