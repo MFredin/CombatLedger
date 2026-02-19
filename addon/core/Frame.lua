@@ -253,7 +253,7 @@ function Frame:Init()
     local verLabel = bottomBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     verLabel:SetPoint("LEFT", bottomBar, "LEFT", 12, 0)
     verLabel:SetTextColor(C.textMuted.r, C.textMuted.g, C.textMuted.b)
-    verLabel:SetText("CombatLedger v1.1.1a  ·  Requires Companion ≥ 1.1.1a")
+    verLabel:SetText("CombatLedger v1.1.1  ·  Requires Companion ≥ 1.1.1")
 
     -- "Reload Data" button — shows a confirmation popup then calls ReloadUI().
     -- Anchored to the far right; companionStatus sits to its left.
