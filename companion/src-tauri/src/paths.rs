@@ -70,7 +70,13 @@ fn detect_wow_root_windows() -> Option<PathBuf> {
 }
 
 /// Discover the Battle.net account directory under WTF/Account/.
-/// Returns a list of candidate account names (filters out directories starting with '#').
+///
+/// WoW places a `SavedVariables/` directory directly inside `WTF/Account/` for
+/// account-wide addon data — this is NOT a Battle.net account name and must be
+/// excluded.  The reliable discriminator is that every real account directory
+/// contains its own `SavedVariables/` subdirectory, whereas the account-wide
+/// `SavedVariables/` directory contains only `.lua` files (no subdirectory of
+/// that name).  Blizzard internal directories (prefixed with `#`) are also skipped.
 pub fn discover_account_names(wow_root: &Path) -> Result<Vec<String>> {
     let account_dir = wow_root.join("WTF").join("Account");
     let entries = std::fs::read_dir(&account_dir)
@@ -80,8 +86,14 @@ pub fn discover_account_names(wow_root: &Path) -> Result<Vec<String>> {
     for entry in entries.flatten() {
         if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
             if let Some(name) = entry.file_name().to_str() {
-                // Skip internal Blizzard directories
-                if !name.starts_with('#') {
+                // Skip Blizzard-internal directories (e.g. #RaidGroup)
+                if name.starts_with('#') {
+                    continue;
+                }
+                // A genuine account directory always contains a SavedVariables
+                // subdirectory.  The account-wide SavedVariables folder that WoW
+                // places alongside real account dirs fails this check.
+                if entry.path().join("SavedVariables").is_dir() {
                     names.push(name.to_string());
                 }
             }

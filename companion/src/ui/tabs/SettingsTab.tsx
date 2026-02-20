@@ -121,7 +121,7 @@ export default function SettingsTab(): React.ReactElement {
             type="text"
             value={wowPath}
             onChange={(e) => handlePathChange(e.target.value)}
-            placeholder="e.g. C:\Program Files (x86)\World of Warcraft"
+            placeholder="e.g. C:\Program Files (x86)\World of Warcraft\_retail_"
             spellCheck={false}
           />
           <button
@@ -136,7 +136,7 @@ export default function SettingsTab(): React.ReactElement {
           <div className="field-group__desc" style={{ color: "var(--red)" }}>{pathError}</div>
         )}
         <div className="field-group__desc">
-          Point to the root WoW folder (the one containing _retail_, _classic_, etc.).
+          Point to the game version folder, e.g. the _retail_ subfolder inside your WoW installation.
         </div>
       </div>
 
