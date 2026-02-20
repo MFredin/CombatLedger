@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CombatLedger — RAID Mode Wireframe</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Barlow:wght@300;400;500&display=swap');
+:root {
+  --bg-base: #0a0c10; --bg-panel: #0f1219; --bg-card: #141820; --bg-hover: #1a2030;
+  --border: #1e2535; --border-light: #252d40;
+  --accent: #e8a820; --accent-dim: #b07a10; --accent-glow: rgba(232,168,32,0.15);
+  --text-primary: #d4dcea; --text-secondary: #6b7a9a; --text-muted: #3d4a62;
+  --death: #e84040; --death-dim: rgba(232,64,64,0.15);
+  --interrupt: #40b8e8; --interrupt-dim: rgba(64,184,232,0.12);
+  --cc: #b040e8; --heal: #40e87a; --damage: #e86040;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #070810;
+  color: var(--text-primary);
+  font-family: 'Barlow', sans-serif;
+  font-weight: 400;
+  min-height: 100vh;
+  padding: 40px 24px;
+}
+
+/* PAGE HEADER */
+.page-header {
+  max-width: 1100px;
+  margin: 0 auto 40px auto;
+  border-left: 4px solid var(--accent);
+  padding-left: 20px;
+}
+.page-header h1 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.page-header p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-top: 6px;
+  line-height: 1.6;
+}
+.page-header .mode-badge {
+  display: inline-block;
+  background: var(--accent-glow);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  margin-top: 10px;
+  text-transform: uppercase;
+}
+
+/* FRAME CHROME */
+.frame {
+  max-width: 1100px;
+  margin: 0 auto 48px auto;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+
+/* TITLEBAR */
+.titlebar {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  height: 48px;
+  gap: 12px;
+}
+.cl-logo {
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+.cl-logo::after {
+  content: 'CL';
+  position: absolute;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0a0c10;
+  letter-spacing: 0.5px;
+}
+.titlebar-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  flex: 1;
+}
+.session-badge {
+  background: var(--accent-glow);
+  border: 1px solid var(--accent-dim);
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 3px;
+  letter-spacing: 1px;
+}
+.close-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border-light);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* TAB BAR */
+.tab-bar {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: stretch;
+  padding: 0 16px;
+  gap: 0;
+}
+.tab {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--text-primary); }
+.tab.active {
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+}
+
+/* FILTER BAR */
+.filter-bar {
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.filter-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.filter-chip {
+  font-family: 'Barlow', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 4px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.filter-chip.active {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+  background: var(--accent-glow);
+}
+.filter-spacer { flex: 1; }
+.mode-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.mode-btn {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  cursor: pointer;
+}
+.mode-btn.raid-active {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border-right: 1px solid var(--border);
+}
+.mode-btn.dungeon-muted {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+/* CONTENT AREA */
+.content-area {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* PANEL WRAPPERS */
+.panel-wrapper {
+  margin: 32px auto 0 auto;
+  max-width: 1100px;
+}
+.panel-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0 0 8px 2px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+.panel-content {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  padding: 16px;
+}
+
+/* NOTE BADGE */
+.note-badge {
+  display: inline-block;
+  background: var(--accent);
+  color: #0a0c10;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+
+/* ENCOUNTER HEADER CARD */
+.encounter-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 4px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.encounter-info h3 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 1px;
+}
+.encounter-info .pull-info {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 3px;
+}
+.stat-counters {
+  display: flex;
+  gap: 20px;
+}
+.stat-counter {
+  text-align: center;
+}
+.stat-counter .stat-val {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+}
+.stat-counter .stat-label {
+  font-family: 'Barlow', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.stat-val.red { color: var(--death); }
+.stat-val.gold { color: var(--accent); }
+.stat-val.blue { color: var(--interrupt); }
+
+/* TWO COLUMN */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 4px;
+}
+.col-section h4 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* DEATH CARD */
+.death-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--death);
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+}
+.death-card .dc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.death-card .dc-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.death-card .dc-spec {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-secondary);
+  background: var(--bg-panel);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+.death-card .dc-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--death);
+}
+.death-card .dc-cause {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* INTERRUPT BAR */
+.int-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.int-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  width: 110px;
+  flex-shrink: 0;
+}
+.int-bar-bg {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-hover);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.int-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+}
+.int-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* SUMMARY BAR */
+.summary-bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+.summary-bar span { color: var(--text-primary); }
+
+/* TABLE */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.data-table th {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+}
+.data-table td {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-primary);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--bg-hover); }
+.data-table tr.wipe-row td { background: var(--death-dim); }
+.data-table tr.kill-row td { background: rgba(64,232,122,0.06); }
+.data-table td.muted { color: var(--text-secondary); }
+.data-table td.gold { color: var(--accent); }
+.data-table td.red { color: var(--death); }
+.data-table td.green { color: var(--heal); }
+.data-table td.blue { color: var(--interrupt); }
+.data-table td.rank { 
+  background: var(--accent-glow); 
+  color: var(--accent); 
+  border-radius: 3px; 
+  font-weight: 500; 
+}
+
+/* PILL RESULT */
+.pill {
+  display: inline-block;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+.pill.kill { background: rgba(64,232,122,0.15); color: var(--heal); }
+.pill.wipe { background: var(--death-dim); color: var(--death); }
+
+/* SPEC BADGE */
+.spec-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+/* DEATH EXPANDED */
+.death-timeline {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.timeline-event {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+.tl-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  width: 42px;
+  flex-shrink: 0;
+}
+.tl-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.tl-dot.dmg { background: var(--damage); }
+.tl-dot.heal { background: var(--heal); }
+.tl-dot.death { background: var(--death); }
+.tl-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* CC TIMELINE */
+.cc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cc-row:last-child { border-bottom: none; }
+.cc-target {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  width: 130px;
+  flex-shrink: 0;
+}
+.cc-timeline-bar {
+  flex: 1;
+  height: 18px;
+  background: var(--bg-hover);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+.cc-seg {
+  position: absolute;
+  height: 100%;
+  border-radius: 2px;
+  opacity: 0.85;
+}
+.cc-seg.stun { background: var(--cc); }
+.cc-seg.slow { background: var(--interrupt); }
+.cc-seg.root { background: var(--heal); }
+.cc-pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--cc);
+  width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* DR LEGEND */
+.dr-legend {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.dr-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.dr-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* HISTORY PANEL */
+.history-banner {
+  background: var(--accent-glow);
+  border: 1px solid var(--accent-dim);
+  border-radius: 4px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+
+/* TRENDS */
+.trend-banner {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 16px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.trend-banner .tb-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 1px;
+}
+.trend-arrows {
+  display: flex;
+  gap: 20px;
+}
+.trend-item {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.trend-item .arrow { font-size: 14px; }
+.trend-item .arrow.down { color: var(--heal); }
+.trend-item .arrow.up { color: var(--damage); }
+.trend-item .arrow.good-up { color: var(--heal); }
+
+.trend-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px 14px;
+}
+.metric-card .mc-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.sparkline {
+  height: 40px;
+  background: var(--bg-hover);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.sparkline::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
+}
+.spark-path {
+  position: absolute;
+  bottom: 6px;
+  left: 8px;
+  right: 8px;
+  height: 28px;
+  border-bottom: 2px solid var(--accent);
+  border-radius: 0 0 2px 2px;
+  opacity: 0.5;
+}
+.metric-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.metric-trend {
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+/* DEFENSIVE AUDIT */
+.def-audit {
+  margin-top: 14px;
+}
+.def-audit h4 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.def-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.def-row:last-child { border-bottom: none; }
+.def-name { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 600; color: var(--text-primary); width: 120px; }
+.def-cd { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-secondary); width: 130px; }
+.def-used { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.def-used.yes { color: var(--heal); }
+.def-used.no { color: var(--death); }
+
+/* SECTION DIVIDER */
+.section-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 20px 0;
+}
+
+/* LEGEND */
+.legend-section {
+  max-width: 1100px;
+  margin: 48px auto 0 auto;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 24px;
+}
+.legend-section h2 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.legend-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.legend-item h4 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.legend-item p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.legend-item code {
+  background: var(--bg-card);
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <h1>CombatLedger Design Reference — RAID Mode</h1>
+  <p>This wireframe documents the full UI layout for CombatLedger in RAID mode. All six tab panels are shown stacked vertically below the shared frame chrome. The History tab is the active tab in the tab bar, reflecting the primary RAID-mode differentiator. Use this document as a pixel-level design reference for implementation.</p>
+  <div class="mode-badge">RAID Mode Active</div>
+</div>
+
+<!-- FRAME CHROME (shown once, persistent across all tabs) -->
+<div class="frame" style="margin-bottom: 0; border-radius: 6px 6px 0 0;">
+
+  <!-- TITLEBAR -->
+  <div class="titlebar">
+    <div class="cl-logo"></div>
+    <div class="titlebar-title">Combat Ledger</div>
+    <div class="session-badge">SESSION 47/47 · MYTHIC</div>
+    <div class="close-btn">✕</div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <div class="tab">Overview</div>
+    <div class="tab">Performance</div>
+    <div class="tab">Deaths</div>
+    <div class="tab">Interrupts</div>
+    <div class="tab">CC Coverage</div>
+    <div class="tab active">History</div>
+    <div class="tab">Trends</div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <div class="filter-label">Preset:</div>
+    <div class="filter-chip active">Default</div>
+    <div class="filter-chip">Deaths Only</div>
+    <div class="filter-chip">Tank Focus</div>
+    <div class="filter-chip">Healer Audit</div>
+    <div class="filter-chip">M+ Push Review</div>
+    <div class="filter-spacer"></div>
+    <div class="mode-toggle">
+      <div class="mode-btn raid-active">Raid</div>
+      <div class="mode-btn dungeon-muted">Dungeon</div>
+    </div>
+  </div>
+
+</div>
+<!-- END FRAME CHROME -->
+
+<!-- ============================================================ -->
+<!-- PANEL 1: OVERVIEW TAB — RAID MODE -->
+<!-- ============================================================ -->
+<div class="panel-wrapper">
+  <div class="panel-label">Overview Tab — RAID Mode</div>
+  <div class="panel-content">
+
+    <!-- Encounter Header Card -->
+    <div class="encounter-card">
+      <div class="encounter-info">
+        <h3>Silken Court</h3>
+        <div class="pull-info">Pull #47 · WIPE · 4m 12s</div>
+      </div>
+      <div class="stat-counters">
+        <div class="stat-counter">
+          <div class="stat-val red">3</div>
+          <div class="stat-label">Deaths</div>
+        </div>
+        <div class="stat-counter">
+          <div class="stat-val gold">67%</div>
+          <div class="stat-label">INT%</div>
+        </div>
+        <div class="stat-counter">
+          <div class="stat-val gold">71%</div>
+          <div class="stat-label">CC%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two Column: Deaths + Interrupts -->
+    <div class="two-col">
+      <!-- Deaths Column -->
+      <div class="col-section">
+        <h4>Deaths</h4>
+        <div class="death-card">
+          <div class="dc-header">
+            <div class="dc-name">Palidwen <span class="dc-spec">DRU</span></div>
+            <div class="dc-time">2:14</div>
+          </div>
+          <div class="dc-cause">Fatal — Skittering Barrage (unmitigated)</div>
+        </div>
+        <div class="death-card">
+          <div class="dc-header">
+            <div class="dc-name">Thraxion <span class="dc-spec">WARR</span></div>
+            <div class="dc-time">3:07</div>
+          </div>
+          <div class="dc-cause">Fatal — Venom Burst + melee overlap</div>
+        </div>
+        <div class="death-card">
+          <div class="dc-header">
+            <div class="dc-name">Miasha <span class="dc-spec">MONK</span></div>
+            <div class="dc-time">3:51</div>
+          </div>
+          <div class="dc-cause">Fatal — Gossamer Trap (no CC on pack)</div>
+        </div>
+      </div>
+
+      <!-- Interrupts Column -->
+      <div class="col-section">
+        <h4>Interrupts 14/21</h4>
+        <div class="int-row">
+          <div class="int-name">Vaelkros</div>
+          <div class="int-bar-bg"><div class="int-bar-fill" style="width:90%"></div></div>
+          <div class="int-val">5/5</div>
+        </div>
+        <div class="int-row">
+          <div class="int-name">Palidwen</div>
+          <div class="int-bar-bg"><div class="int-bar-fill" style="width:60%"></div></div>
+          <div class="int-val">3/5</div>
+        </div>
+        <div class="int-row">
+          <div class="int-name">Thraxion</div>
+          <div class="int-bar-bg"><div class="int-bar-fill" style="width:40%"></div></div>
+          <div class="int-val">2/5</div>
+        </div>
+        <div class="int-row">
+          <div class="int-name">Miasha</div>
+          <div class="int-bar-bg"><div class="int-bar-fill" style="width:80%"></div></div>
+          <div class="int-val">4/5</div>
+        </div>
+        <div class="int-row">
+          <div class="int-name">Zorneth</div>
+          <div class="int-bar-bg"><div class="int-bar-fill" style="width:0%"></div></div>
+          <div class="int-val" style="color:var(--death)">0/1</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <span class="note-badge">&#9873; Pull #N label (raid-specific)</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PANEL 2: PERFORMANCE TAB — RAID MODE -->
+<!-- ============================================================ -->
+<div class="panel-wrapper" style="margin-top:24px;">
+  <div class="panel-label">Performance Tab — RAID Mode</div>
+  <div class="panel-content">
+
+    <div class="summary-bar"><span>Silken Court</span> | Pull #47 — Wipe — 252s</div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Spec</th>
+          <th>DPS</th>
+          <th>HPS</th>
+          <th>Interrupts</th>
+          <th>Deaths</th>
+          <th>CC Applied</th>
+          <th>Rank</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Vaelkros</td>
+          <td><span class="spec-badge">RET PAL</span></td>
+          <td class="gold">88,420</td>
+          <td class="muted">—</td>
+          <td class="gold">5/5</td>
+          <td>0</td>
+          <td>2</td>
+          <td class="rank">97th</td>
+        </tr>
+        <tr>
+          <td>Thraxion</td>
+          <td><span class="spec-badge">ARMS WARR</span></td>
+          <td class="gold">76,310</td>
+          <td class="muted">—</td>
+          <td>2/5</td>
+          <td class="red">1</td>
+          <td>1</td>
+          <td class="rank">74th</td>
+        </tr>
+        <tr>
+          <td>Miasha</td>
+          <td><span class="spec-badge">WW MONK</span></td>
+          <td class="gold">71,880</td>
+          <td class="muted">—</td>
+          <td>4/5</td>
+          <td class="red">1</td>
+          <td>3</td>
+          <td class="rank">81st</td>
+        </tr>
+        <tr>
+          <td>Palidwen</td>
+          <td><span class="spec-badge">RESTO DRU</span></td>
+          <td class="muted">4,200</td>
+          <td class="gold">42,100</td>
+          <td>3/5</td>
+          <td class="red">1</td>
+          <td>0</td>
+          <td class="rank">62nd</td>
+        </tr>
+        <tr>
+          <td>Zorneth</td>
+          <td><span class="spec-badge">PROT WAR</span></td>
+          <td class="muted">38,000</td>
+          <td class="muted">12,400</td>
+          <td class="red">0/1</td>
+          <td>0</td>
+          <td>1</td>
+          <td class="rank">55th</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Defensive Audit -->
+    <div class="def-audit">
+      <h4>Defensive Audit</h4>
+      <div class="def-row">
+        <div class="def-name">Zorneth</div>
+        <div class="def-cd">Shield Wall</div>
+        <div class="def-used yes">Used — 2:04</div>
+      </div>
+      <div class="def-row">
+        <div class="def-name">Palidwen</div>
+        <div class="def-cd">Barkskin</div>
+        <div class="def-used no">Not Used</div>
+      </div>
+      <div class="def-row">
+        <div class="def-name">Thraxion</div>
+        <div class="def-cd">Die by the Sword</div>
+        <div class="def-used no">Not Used</div>
+      </div>
+      <div class="def-row">
+        <div class="def-name">Vaelkros</div>
+        <div class="def-cd">Divine Shield</div>
+        <div class="def-used yes">Used — 3:33</div>
+      </div>
+    </div>
+
+    <div><span class="note-badge">&#9873; Rank column shows pull history percentile — raid-specific</span></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PANEL 3: DEATHS TAB — RAID MODE -->
+<!-- ============================================================ -->
+<div class="panel-wrapper" style="margin-top:24px;">
+  <div class="panel-label">Deaths Tab — RAID Mode</div>
+  <div class="panel-content">
+
+    <div class="summary-bar"><span>Silken Court</span> | Pull #47 — Wipe — 3 death(s)</div>
+
+    <!-- Death Card 1 — EXPANDED -->
+    <div class="death-card" style="margin-bottom:10px;">
+      <div class="dc-header">
+        <div class="dc-name" style="font-size:15px;">Palidwen <span class="dc-spec">RESTO DRU</span></div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div class="dc-time">t = 2:14</div>
+          <div class="pill wipe">Wipe</div>
+        </div>
+      </div>
+      <div class="dc-cause" style="margin-top:6px;">Fatal — Skittering Barrage (overkill: 94,300 dmg) · No defensive active</div>
+      <!-- Expanded Timeline -->
+      <div class="death-timeline">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Event Timeline</div>
+        <div class="timeline-event">
+          <div class="tl-time">2:08</div>
+          <div class="tl-dot dmg"></div>
+          <div class="tl-text">Skittering Barrage hits — 38,200 dmg (HP: 100% → 52%)</div>
+        </div>
+        <div class="timeline-event">
+          <div class="tl-time">2:10</div>
+          <div class="tl-dot heal"></div>
+          <div class="tl-text">Lifebloom tick — +4,400 HP (HP: 52% → 58%)</div>
+        </div>
+        <div class="timeline-event">
+          <div class="tl-time">2:12</div>
+          <div class="tl-dot dmg"></div>
+          <div class="tl-text">Venomstrike melee — 12,800 dmg (HP: 58% → 42%)</div>
+        </div>
+        <div class="timeline-event">
+          <div class="tl-time">2:14</div>
+          <div class="tl-dot death"></div>
+          <div class="tl-text" style="color:var(--death);">Skittering Barrage — 94,300 fatal (HP: 42% → 0) · No Barkskin</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Death Card 2 — COLLAPSED -->
+    <div class="death-card" style="margin-bottom:10px;">
+      <div class="dc-header">
+        <div class="dc-name" style="font-size:15px;">Thraxion <span class="dc-spec">ARMS WARR</span></div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div class="dc-time">t = 3:07</div>
+          <div class="pill wipe">Wipe</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);">▶ Expand</div>
+        </div>
+      </div>
+      <div class="dc-cause" style="margin-top:6px;">Fatal — Venom Burst + melee overlap · Die by the Sword not used</div>
+    </div>
+
+    <!-- Death Card 3 — COLLAPSED -->
+    <div class="death-card">
+      <div class="dc-header">
+        <div class="dc-name" style="font-size:15px;">Miasha <span class="dc-spec">WW MONK</span></div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div class="dc-time">t = 3:51</div>
+          <div class="pill wipe">Wipe</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);">▶ Expand</div>
+        </div>
+      </div>
+      <div class="dc-cause" style="margin-top:6px;">Fatal — Gossamer Trap (no CC on pack, overkill: 62,100 dmg)</div>
+    </div>
+
+    <div><span class="note-badge">&#9873; Pull #N context visible in summary bar — raid-specific</span></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PANEL 4: CC COVERAGE TAB — RAID MODE -->
+<!-- ============================================================ -->
+<div class="panel-wrapper" style="margin-top:24px;">
+  <div class="panel-label">CC Coverage Tab — RAID Mode</div>
+  <div class="panel-content">
+
+    <div class="summary-bar"><span>Silken Court</span> | Pull #47 — Wipe — 4 target(s)</div>
+
+    <!-- DR Legend -->
+    <div class="dr-legend">
+      <div class="dr-item"><div class="dr-dot" style="background:var(--cc)"></div>Stun (DR tracked)</div>
+      <div class="dr-item"><div class="dr-dot" style="background:var(--interrupt)"></div>Slow / Kite</div>
+      <div class="dr-item"><div class="dr-dot" style="background:var(--heal)"></div>Root</div>
+      <div class="dr-item"><div class="dr-dot" style="background:var(--text-muted)"></div>DR: diminished return window</div>
+    </div>
+
+    <!-- Column headers -->
+    <div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:6px;">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--accent);width:130px;flex-shrink:0;">Target</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--accent);flex:1;">Timeline (0 — 4:12)</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--accent);width:40px;text-align:right;">CC%</div>
+    </div>
+
+    <!-- CC Target Rows -->
+    <div class="cc-row">
+      <div class="cc-target">Skittering Drone A</div>
+      <div class="cc-timeline-bar">
+        <div class="cc-seg stun" style="left:5%;width:12%"></div>
+        <div class="cc-seg slow" style="left:22%;width:18%"></div>
+        <div class="cc-seg stun" style="left:48%;width:10%"></div>
+        <div class="cc-seg root" style="left:65%;width:14%"></div>
+      </div>
+      <div class="cc-pct">78%</div>
+    </div>
+    <div class="cc-row">
+      <div class="cc-target">Skittering Drone B</div>
+      <div class="cc-timeline-bar">
+        <div class="cc-seg slow" style="left:8%;width:20%"></div>
+        <div class="cc-seg stun" style="left:35%;width:8%"></div>
+        <div class="cc-seg root" style="left:58%;width:16%"></div>
+      </div>
+      <div class="cc-pct">62%</div>
+    </div>
+    <div class="cc-row">
+      <div class="cc-target">Web Spinner</div>
+      <div class="cc-timeline-bar">
+        <div class="cc-seg stun" style="left:12%;width:9%"></div>
+        <div class="cc-seg slow" style="left:30%;width:22%"></div>
+      </div>
+      <div class="cc-pct" style="color:var(--damage)">41%</div>
+    </div>
+    <div class="cc-row">
+      <div class="cc-target">Silk Guard</div>
+      <div class="cc-timeline-bar">
+        <div class="cc-seg root" style="left:20%;width:30%"></div>
+        <div class="cc-seg stun" style="left:60%;width:12%"></div>
+      </div>
+      <div class="cc-pct">52%</div>
+    </div>
+
+    <div><span class="note-badge">&#9873; 4 targets shown — scales with encounter add count in RAID</span></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PANEL 5: HISTORY TAB — RAID MODE (ACTIVE TAB) -->
+<!-- ============================================================ -->
+<div class="panel-wrapper" style="margin-top:24px;">
+  <div class="panel-label" style="color:var(--accent);border-bottom-color:var(--accent);">History Tab — RAID Mode ★ ACTIVE TAB</div>
+  <div class="panel-content" style="border-color:var(--accent-dim);">
+
+    <div class="history-banner">23 sessions · Active: Pull #47 (Silken Court) · Mythic Progression</div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Boss</th>
+          <th>Difficulty</th>
+          <th>Duration</th>
+          <th>Deaths</th>
+          <th>Int %</th>
+          <th>Result</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="kill-row">
+          <td class="muted">47</td>
+          <td>Silken Court</td>
+          <td class="gold">Mythic</td>
+          <td>3:41</td>
+          <td>1</td>
+          <td class="gold">81%</td>
+          <td><span class="pill kill">Kill</span></td>
+          <td class="muted">Feb 18</td>
+        </tr>
+        <tr class="wipe-row">
+          <td class="muted">46</td>
+          <td>Silken Court</td>
+          <td class="gold">Mythic</td>
+          <td>4:12</td>
+          <td class="red">3</td>
+          <td>67%</td>
+          <td><span class="pill wipe">Wipe</span></td>
+          <td class="muted">Feb 18</td>
+        </tr>
+        <tr class="wipe-row">
+          <td class="muted">45</td>
+          <td>Silken Court</td>
+          <td class="gold">Mythic</td>
+          <td>2:58</td>
+          <td class="red">5</td>
+          <td>54%</td>
+          <td><span class="pill wipe">Wipe</span></td>
+          <td class="muted">Feb 18</td>
+        </tr>
+        <tr class="kill-row">
+          <td class="muted">44</td>
+          <td>Nexus-Princess Ky'veza</td>
+          <td class="gold">Mythic</td>
+          <td>6:22</td>
+          <td>2</td>
+          <td class="gold">88%</td>
+          <td><span class="pill kill">Kill</span></td>
+          <td class="muted">Feb 15</td>
+        </tr>
+        <tr class="wipe-row">
+          <td class="muted">43</td>
+          <td>Nexus-Princess Ky'veza</td>
+          <td class="gold">Mythic</td>
+          <td>5:04</td>
+          <td class="red">4</td>
+          <td>72%</td>
+          <td><span class="pill wipe">Wipe</span></td>
+          <td class="muted">Feb 15</td>
+        </tr>
+        <tr class="wipe-row">
+          <td class="muted">42</td>
+          <td>Nexus-Princess Ky'veza</td>
+          <td class="gold">Mythic</td>
+          <td>3:17</td>
+          <td class="red">7</td>
+          <td>61%</td>
+          <td><span class="pill wipe">Wipe</span></td>
+          <td class="muted">Feb 13</td>
+        </tr>
+        <tr class="kill-row">
+          <td class="muted">41</td>
+          <td>Ansurek</td>
+          <td class="gold">Mythic</td>
+          <td>8:14</td>
+          <td>1</td>
+          <td class="gold">92%</td>
+          <td><span class="pill kill">Kill</span></td>
+          <td class="muted">Feb 11</td>
+        </tr>
+        <tr class="wipe-row">
+          <td class="muted">40</td>
+          <td>Ansurek</td>
+          <td class="gold">Mythic</td>
+          <td>7:01</td>
+          <td class="red">6</td>
+          <td>58%</td>
+          <td><span class="pill wipe">Wipe</span></td>
+          <td class="muted">Feb 11</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div><span class="note-badge">&#9873; Filtered to RAID sessions only — dungeon runs hidden</span></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PANEL 6: TRENDS TAB — RAID MODE -->
+<!-- ============================================================ -->
+<div class="panel-wrapper" style="margin-top:24px;margin-bottom:0;">
+  <div class="panel-label">Trends Tab — RAID Mode</div>
+  <div class="panel-content">
+
+    <div class="trend-banner">
+      <div class="tb-title">Silken Court · 47 pulls · 2 kills · best 3m 41s</div>
+      <div class="trend-arrows">
+        <div class="trend-item">Deaths <span class="arrow down">↓</span> 0.3</div>
+        <div class="trend-item">Interrupts <span class="arrow good-up">↑</span> 2.1</div>
+        <div class="trend-item">DPS <span class="arrow good-up">↑</span> 15.2k</div>
+      </div>
+    </div>
+
+    <div class="trend-metrics">
+      <!-- METRIC 1: Deaths (shown FIRST in RAID mode) -->
+      <div class="metric-card" style="border-left:3px solid var(--death);">
+        <div class="mc-label" style="color:var(--death);">1. Deaths per Pull</div>
+        <div class="sparkline" style="background:linear-gradient(to right,var(--death-dim),transparent);">
+          <svg width="100%" height="40" style="position:absolute;top:0;left:0;">
+            <polyline points="0,32 60,28 120,35 180,22 240,18 300,12 360,8 420,6" fill="none" stroke="#e84040" stroke-width="2" opacity="0.8"/>
+          </svg>
+        </div>
+        <div class="metric-val" style="color:var(--death);">Avg 3.4 → 2.1 deaths/pull</div>
+        <div class="metric-trend" style="color:var(--heal);">↓ Improving over last 10 pulls</div>
+      </div>
+
+      <!-- METRIC 2: Interrupt Rate % -->
+      <div class="metric-card" style="border-left:3px solid var(--accent);">
+        <div class="mc-label">2. Interrupt Rate %</div>
+        <div class="sparkline">
+          <svg width="100%" height="40" style="position:absolute;top:0;left:0;">
+            <polyline points="0,30 60,26 120,22 180,20 240,16 300,12 360,10 420,8" fill="none" stroke="#e8a820" stroke-width="2" opacity="0.8"/>
+          </svg>
+        </div>
+        <div class="metric-val">54% → 81%</div>
+        <div class="metric-trend" style="color:var(--heal);">↑ +27% over session arc</div>
+      </div>
+
+      <!-- METRIC 3: Group DPS -->
+      <div class="metric-card" style="border-left:3px solid var(--damage);">
+        <div class="mc-label">3. Group DPS</div>
+        <div class="sparkline">
+          <svg width="100%" height="40" style="position:absolute;top:0;left:0;">
+            <polyline points="0,34 60,31 120,28 180,24 240,22 300,18 360,14 420,10" fill="none" stroke="#e86040" stroke-width="2" opacity="0.8"/>
+          </svg>
+        </div>
+        <div class="metric-val">238.4k → 274.6k</div>
+        <div class="metric-trend" style="color:var(--heal);">↑ +15.2k avg per pull trend</div>
+      </div>
+
+      <!-- METRIC 4: CC Coverage % -->
+      <div class="metric-card" style="border-left:3px solid var(--cc);">
+        <div class="mc-label">4. CC Coverage %</div>
+        <div class="sparkline">
+          <svg width="100%" height="40" style="position:absolute;top:0;left:0;">
+            <polyline points="0,28 60,26 120,24 180,22 240,20 300,18 360,16 420,14" fill="none" stroke="#b040e8" stroke-width="2" opacity="0.8"/>
+          </svg>
+        </div>
+        <div class="metric-val">58% → 71%</div>
+        <div class="metric-trend" style="color:var(--heal);">↑ Gradual improvement</div>
+      </div>
+    </div>
+
+    <div><span class="note-badge">&#9873; Deaths shown FIRST in RAID mode — most critical metric for progression wipes</span></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- LEGEND SECTION -->
+<!-- ============================================================ -->
+<div class="legend-section">
+  <h2>Mode Difference Legend — RAID vs DUNGEON</h2>
+  <div class="legend-grid">
+    <div class="legend-item">
+      <h4>Accent Color</h4>
+      <p>RAID mode uses <code style="color:var(--accent);">#e8a820</code> gold for active states, borders, and highlights. DUNGEON mode switches these to <code style="color:var(--interrupt);">#40b8e8</code> blue.</p>
+    </div>
+    <div class="legend-item">
+      <h4>Mode Toggle</h4>
+      <p>Filter bar right side. RAID active = gold pill. DUNGEON active = blue pill. Inactive mode is muted <code>--text-muted</code>. Toggling changes accent color system-wide and filters History/Trends data.</p>
+    </div>
+    <div class="legend-item">
+      <h4>Session Label</h4>
+      <p>RAID: "Pull #N" (e.g. Pull #47). DUNGEON: "Run #N" (e.g. Run #12). This label appears in the titlebar badge, encounter header, summary bars, and history rows.</p>
+    </div>
+    <div class="legend-item">
+      <h4>INT% vs INTERRUPT Label</h4>
+      <p>RAID: stat counter labeled <code>INT%</code> in gold. DUNGEON: stat counter labeled <code>INTERRUPT</code> in blue — more prominent, reflects M+ priority.</p>
+    </div>
+    <div class="legend-item">
+      <h4>Performance: Rank vs Time Lost</h4>
+      <p>RAID Performance table last column = <code>Rank</code> (pull history percentile). DUNGEON = <code>Time Lost</code> (seconds lost to death, downtime, failed CC).</p>
+    </div>
+    <div class="legend-item">
+      <h4>Trends Metric Order</h4>
+      <p>RAID: Deaths (1st) → Interrupt Rate (2nd) → Group DPS (3rd) → CC Coverage (4th). DUNGEON: Interrupt Rate (1st, most critical for keys) → Deaths (2nd) → DPS (3rd) → CC (4th).</p>
+    </div>
+    <div class="legend-item">
+      <h4>History Filter</h4>
+      <p>History tab is filtered by active mode. RAID shows only raid encounters (boss pulls with pull numbers, Mythic difficulty). DUNGEON shows only dungeon runs (encounters with Run #, key level context).</p>
+    </div>
+    <div class="legend-item">
+      <h4>History Interrupt Column</h4>
+      <p>RAID History: column header <code>Int %</code> in standard gold accent. DUNGEON History: column header <code>Interrupt</code> in blue — visually distinguished to reinforce M+ priority.</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

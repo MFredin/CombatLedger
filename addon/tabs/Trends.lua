@@ -103,19 +103,21 @@ end
 -- Group trend summary banner
 -- ---------------------------------------------------------------------------
 
-local function buildSummaryBanner(parent, trend, yStart)
+local function buildSummaryBanner(parent, trend, yStart, isDungeon)
     local summary = trend.summary or {}
     local y = yStart
+    local pullWord = isDungeon and "runs" or "pulls"
+    local bestWord = isDungeon and "best run" or "best"
 
-    -- Boss name + pull counts
+    -- Boss / encounter name + pull/run counts
     local titleFs = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     titleFs:SetPoint("TOPLEFT", parent, "TOPLEFT", 8, y)
     titleFs:SetFormattedText(
-        "|cffe8a820%s|r  |cff6b7a9a%d pulls  ·  %d kills  ·  best %s|r",
-        trend.encounterName or "Unknown Boss",
-        summary.totalPulls or 0,
+        "|cffe8a820%s|r  |cff6b7a9a%d %s  ·  %d kills  ·  %s %s|r",
+        trend.encounterName or "Unknown",
+        summary.totalPulls or 0, pullWord,
         summary.kills or 0,
-        CL.Data:FormatDuration(summary.bestTimeSec or 0)
+        bestWord, CL.Data:FormatDuration(summary.bestTimeSec or 0)
     )
     y = y - 24
 
@@ -367,9 +369,24 @@ function Trends:Render(parent)
     if #points == 0 then
         CL.Frame:ShowEmptyState(
             "Not enough data for trend analysis.",
-            "Complete multiple pulls on the same boss to see trends."
+            "Complete multiple pulls on the same encounter to see trends."
         )
         return
+    end
+
+    local isDungeon = CL.Config:GetViewMode() == "dungeon"
+
+    -- In dungeon mode, surface Interrupt Rate first — it's the primary M+ metric.
+    local orderedMetrics
+    if isDungeon then
+        orderedMetrics = {
+            METRIC_DEFS[2],  -- Interrupt Rate %
+            METRIC_DEFS[1],  -- Deaths
+            METRIC_DEFS[3],  -- Group DPS
+            METRIC_DEFS[4],  -- CC Coverage %
+        }
+    else
+        orderedMetrics = METRIC_DEFS
     end
 
     local scrollFrame, content = CL.Frame:MakeScrollable(parent)
@@ -377,10 +394,10 @@ function Trends:Render(parent)
 
     -- Summary banner
     local yOffset = -8
-    yOffset = buildSummaryBanner(content, trend, yOffset)
+    yOffset = buildSummaryBanner(content, trend, yOffset, isDungeon)
 
-    -- One spark-line per metric
-    for _, metricDef in ipairs(METRIC_DEFS) do
+    -- One spark-line per metric (order depends on mode)
+    for _, metricDef in ipairs(orderedMetrics) do
         yOffset = buildMetricSection(content, metricDef, points, yOffset)
     end
 
