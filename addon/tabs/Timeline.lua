@@ -17,9 +17,11 @@ local C = CL.Config.colours
 -- ---------------------------------------------------------------------------
 
 -- Filter key: "all" | "high" | "low"
-local activeFilter   = "all"
+local activeFilter = "all"
+-- Phase filter: 0 = show all phases; positive integer = show only that phase index.
+local activePhase  = 0
 -- Index (1-based) of the currently expanded event row, or nil.
-local expandedIdx    = nil
+local expandedIdx  = nil
 
 -- Importance tier → stripe colour (RGB fractions)
 local IMP_COLOR = {
@@ -311,6 +313,61 @@ function Timeline:Render(parent)
     end
     yOff = yOff - 30
 
+    -- Phase filter chips (only shown when phase data is present) ---------------
+    local phases = tl.phases or {}
+    if #phases > 0 then
+        local phaseLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        phaseLabel:SetPoint("TOPLEFT", content, "TOPLEFT", 16, yOff + 2)
+        phaseLabel:SetTextColor(C.textMuted.r, C.textMuted.g, C.textMuted.b)
+        phaseLabel:SetText("PHASE:")
+
+        local phaseBtns = {}
+        local phX = 72
+
+        local function makePhaseChip(label, phaseIdx)
+            local pb = CreateFrame("Button", nil, content)
+            pb:SetSize(94, 22)
+            pb:SetPoint("TOPLEFT", content, "TOPLEFT", phX, yOff)
+            phX = phX + 100
+
+            local pbBg  = pb:CreateTexture(nil, "BACKGROUND")
+            pbBg:SetAllPoints(pb)
+            local pbTxt = pb:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            pbTxt:SetAllPoints(pb)
+            pbTxt:SetJustifyH("CENTER")
+            pbTxt:SetText(label)
+
+            local function updatePb()
+                local active = (activePhase == phaseIdx)
+                pbBg:SetColorTexture(
+                    active and C.blue.r * 0.25 or C.panelBg.r,
+                    active and C.blue.g * 0.25 or C.panelBg.g,
+                    active and C.blue.b * 0.25 or C.panelBg.b)
+                pbTxt:SetTextColor(
+                    active and C.blue.r or C.textSecondary.r,
+                    active and C.blue.g or C.textSecondary.g,
+                    active and C.blue.b or C.textSecondary.b)
+            end
+            updatePb()
+            table.insert(phaseBtns, { update = updatePb, idx = phaseIdx })
+
+            pb:SetScript("OnClick", function()
+                activePhase = phaseIdx
+                expandedIdx = nil
+                for _, pb2 in ipairs(phaseBtns) do pb2.update() end
+                Timeline:Render(parent)
+            end)
+        end
+
+        -- "All Phases" chip (phaseIdx = 0)
+        makePhaseChip("ALL PHASES", 0)
+        for _, ph in ipairs(phases) do
+            local lbl = ph.phaseName:upper()
+            makePhaseChip(lbl, ph.index)
+        end
+        yOff = yOff - 30
+    end
+
     -- Column header ------------------------------------------------------------
     local colHdr = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     colHdr:SetPoint("TOPLEFT", content, "TOPLEFT", 16, yOff)
@@ -325,10 +382,13 @@ function Timeline:Render(parent)
     divTex:SetColorTexture(C.borderVis.r, C.borderVis.g, C.borderVis.b)
     yOff = yOff - 6
 
-    -- Apply filter -------------------------------------------------------------
+    -- Apply filters (phase first, then importance) -----------------------------
     local filtered = {}
     for i, ev in ipairs(events) do
-        if activeFilter == "all" then
+        -- Phase gate: skip if a specific phase is selected and event doesn't match.
+        if activePhase > 0 and (ev.phaseIndex or 0) ~= activePhase then
+            -- skip
+        elseif activeFilter == "all" then
             table.insert(filtered, { ev = ev, origIdx = i })
         elseif activeFilter == "high" and (ev.importance == "high" or ev.importance == "medium") then
             table.insert(filtered, { ev = ev, origIdx = i })

@@ -70,11 +70,132 @@ export interface BossAbilityCast {
   deathsLinked: string[];
   /** Per-player breakdown, sorted damage-desc. */
   impacts: TimelinePlayerImpact[];
+  /** 1-based index into BossTimeline.phases. 0 if no phases were detected. */
+  phaseIndex: number;
+}
+
+/** A contiguous segment of the boss encounter, separated by boss-casting gaps. */
+export interface BossPhase {
+  /** 1-based position in the phase sequence (Phase 1 = 1, Intermission = 2, Phase 2 = 3, …). */
+  index: number;
+  /** Human-readable label, e.g. "Phase 1", "Intermission", "Phase 2". */
+  phaseName: string;
+  /** Seconds into the pull where this phase begins. */
+  startSec: number;
+  /** Seconds into the pull where this phase ends. */
+  endSec: number;
+  /** True for gap segments (boss stopped casting for >= threshold). */
+  isIntermission: boolean;
 }
 
 export interface BossTimeline {
   pullDurationSec: number;
+  /** Phase segments detected from casting gaps. Empty when the fight has no distinct phases. */
+  phases: BossPhase[];
   events: BossAbilityCast[];
+}
+
+// ---------------------------------------------------------------------------
+// Phase detection
+// ---------------------------------------------------------------------------
+
+/** Minimum gap (seconds) in the dominant boss caster's spell stream to be
+ *  treated as a phase boundary / intermission. */
+const PHASE_GAP_SEC = 20;
+
+/** Minimum events needed from the dominant caster before phase detection runs. */
+const PHASE_MIN_EVENTS = 8;
+
+/**
+ * Detect boss-encounter phases by looking for sustained gaps in the dominant
+ * enemy caster's SPELL_CAST_SUCCESS stream.  Returns an empty array when the
+ * fight appears to be a single continuous phase.
+ */
+function detectPhases(events: BossAbilityCast[], totalDurationSec: number): BossPhase[] {
+  if (events.length < PHASE_MIN_EVENTS) return [];
+
+  // ── Find the dominant caster (highest event count). ─────────────────────
+  const casterCount = new Map<string, number>();
+  for (const ev of events) {
+    casterCount.set(ev.casterGUID, (casterCount.get(ev.casterGUID) ?? 0) + 1);
+  }
+  let dominantGUID = "";
+  let maxCount = 0;
+  for (const [guid, count] of casterCount) {
+    if (count > maxCount) { maxCount = count; dominantGUID = guid; }
+  }
+
+  // Only dominant caster's events, already in chronological order.
+  const bossEvents = events.filter((e) => e.casterGUID === dominantGUID);
+  if (bossEvents.length < PHASE_MIN_EVENTS) return [];
+
+  // ── Scan for gaps ≥ PHASE_GAP_SEC in that caster's stream. ──────────────
+  const gaps: { start: number; end: number }[] = [];
+  for (let i = 1; i < bossEvents.length; i++) {
+    const gap = bossEvents[i]!.timeIntoPull - bossEvents[i - 1]!.timeIntoPull;
+    if (gap >= PHASE_GAP_SEC) {
+      gaps.push({ start: bossEvents[i - 1]!.timeIntoPull, end: bossEvents[i]!.timeIntoPull });
+    }
+  }
+  if (gaps.length === 0) return [];   // single continuous phase
+
+  // ── Build phase list: active → intermission → active → … ────────────────
+  const phases: BossPhase[] = [];
+  let phaseNum = 1;
+  let prevEnd = 0;
+  const multiGap = gaps.length > 1;
+
+  for (let gi = 0; gi < gaps.length; gi++) {
+    const gap = gaps[gi]!;
+    // Active phase leading up to the gap.
+    phases.push({
+      index: phases.length + 1,
+      phaseName: `Phase ${phaseNum++}`,
+      startSec: prevEnd,
+      endSec: gap.start,
+      isIntermission: false,
+    });
+    // The gap itself = intermission.
+    phases.push({
+      index: phases.length + 1,
+      phaseName: multiGap ? `Intermission ${gi + 1}` : "Intermission",
+      startSec: gap.start,
+      endSec: gap.end,
+      isIntermission: true,
+    });
+    prevEnd = gap.end;
+  }
+  // Final active phase after the last gap.
+  phases.push({
+    index: phases.length + 1,
+    phaseName: `Phase ${phaseNum}`,
+    startSec: prevEnd,
+    endSec: totalDurationSec,
+    isIntermission: false,
+  });
+
+  return phases;
+}
+
+/** Assign phaseIndex to every event based on detected phases. */
+function tagEventPhases(events: BossAbilityCast[], phases: BossPhase[]): void {
+  for (const ev of events) {
+    if (phases.length === 0) {
+      ev.phaseIndex = 0;
+      continue;
+    }
+    let assigned = false;
+    for (const phase of phases) {
+      if (ev.timeIntoPull >= phase.startSec && ev.timeIntoPull <= phase.endSec) {
+        ev.phaseIndex = phase.index;
+        assigned = true;
+        break;
+      }
+    }
+    if (!assigned) {
+      ev.phaseIndex = phases[phases.length - 1]!.index;
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -190,6 +311,7 @@ export function buildBossTimeline(
       totalDamageTaken: totalDmg,
       deathsLinked,
       impacts,
+      phaseIndex: 0,   // filled in below
     });
   }
 
@@ -212,8 +334,16 @@ export function buildBossTimeline(
     }
   }
 
+  // ------------------------------------------------------------------
+  // Phase detection: find sustained casting gaps from the dominant boss
+  // ------------------------------------------------------------------
+  const pullDurationSec = Math.round(durationMs / 1000);
+  const phases = detectPhases(results, pullDurationSec);
+  tagEventPhases(results, phases);
+
   return {
-    pullDurationSec: Math.round(durationMs / 1000),
+    pullDurationSec,
+    phases,
     events: results,
   };
 }
