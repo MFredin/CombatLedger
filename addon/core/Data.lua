@@ -81,6 +81,13 @@ function Data:GetDefensiveAudit(session)
     return session.defensiveAudit or {}
 end
 
+--- Returns the boss timeline for a session.
+--- Contains .pullDurationSec and .events[] with importance-tiered boss casts.
+function Data:GetBossTimeline(session)
+    if not session then return {} end
+    return session.bossTimeline or {}
+end
+
 --- Format a duration in seconds as "Xm Ys" or "Xs".
 function Data:FormatDuration(sec)
     sec = math.floor(sec or 0)

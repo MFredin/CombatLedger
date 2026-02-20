@@ -43,9 +43,11 @@ export interface InterruptReport {
     missed: number;
     ratePercent: number;
   };
+  /** Keyed by player GUID for exact downstream matching (no name-string fuzzy compare). */
   byPlayer: Record<
     string,
     {
+      playerGUID: string;
       playerName: string;
       intercepted: number;
       opportunities: number;
@@ -73,7 +75,7 @@ export function buildInterruptReport(session: EncounterSession): InterruptReport
   }
   const pendingCasts: PendingCast[] = [];
   const completedInterrupts: InterruptEvent[] = [];
-  const byPlayer: Record<string, { playerName: string; intercepted: number; opportunities: number }> = {};
+  const byPlayer: Record<string, { playerGUID: string; playerName: string; intercepted: number; opportunities: number }> = {};
 
   for (const e of events) {
     // Track enemy cast starts.
@@ -100,12 +102,14 @@ export function buildInterruptReport(session: EncounterSession): InterruptReport
         const elapsedMs = interrupt.timestamp.getTime() - pending.startMs;
         const castPct = castDurationMs > 0 ? Math.min(100, (elapsedMs / castDurationMs) * 100) : 0;
 
-        // Track per-player interrupt.
+        // Track per-player interrupt — keyed by GUID so performance.ts can
+        // match exactly via accums.get(guid) instead of a name-string scan.
+        const pGUID = interrupt.sourceGUID;
         const pName = interrupt.sourceName;
-        if (!byPlayer[pName]) {
-          byPlayer[pName] = { playerName: pName, intercepted: 0, opportunities: 0 };
+        if (!byPlayer[pGUID]) {
+          byPlayer[pGUID] = { playerGUID: pGUID, playerName: pName, intercepted: 0, opportunities: 0 };
         }
-        byPlayer[pName].intercepted++;
+        byPlayer[pGUID]!.intercepted++;
 
         completedInterrupts.push({
           timestamp: interrupt.timestamp,

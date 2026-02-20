@@ -13,6 +13,7 @@ import { buildInterruptReport } from "./interrupt.js";
 import { buildCCCoverage } from "./cc.js";
 import { buildPerformanceReport } from "./performance.js";
 import { buildDefensiveAudit } from "./defensive.js";
+import { buildBossTimeline } from "./timeline.js";
 import { GuidResolver } from "../enrichment/guid.js";
 import { serializeToLua, sessionToLuaValue } from "../serializer/savedvars.js";
 import { persistAndAnalyze } from "../storage/trends.js";
@@ -99,16 +100,30 @@ export class ParserOrchestrator {
     // has a source/dest carries the name as a plain string in the log line).
     resolver.populateNamesFromEvents(session.events);
 
+    // Patch real names back into session.combatants so serialisation emits
+    // actual player names rather than the GUID-as-placeholder that
+    // COMBATANT_INFO produces.  The resolver map is updated in-place by
+    // populateNamesFromEvents() but session.combatants is a separate array.
+    for (const c of session.combatants) {
+      const info = resolver.resolve(c.guid);
+      if (info && info.name !== info.guid) {
+        c.name = info.name;
+      }
+    }
+
     const deaths = buildDeathRecaps(session, resolver);
     const interrupts = buildInterruptReport(session);
     const ccCoverage = buildCCCoverage(session);
     const performance = buildPerformanceReport(session, resolver, interrupts, deaths, ccCoverage);
     const defensiveAudit = buildDefensiveAudit(session, resolver, deaths);
+    // Boss timeline — Raid sessions only (groupSize > 5).  For dungeons the
+    // data is still computed but the addon tab is gated behind isRaid.
+    const bossTimeline = buildBossTimeline(session, deaths, resolver);
 
     // Build a pre-converted snapshot for this session so it can be stored in
     // SQLite and reused as historical data in future companion runs.
     const snapshot = sessionToLuaValue(
-      session, deaths, interrupts, ccCoverage, performance, defensiveAudit,
+      session, deaths, interrupts, ccCoverage, performance, defensiveAudit, bossTimeline,
     ) as Record<string, unknown>;
 
     // Phase 3: persist to SQLite and retrieve trend/distribution data.
@@ -134,7 +149,7 @@ export class ParserOrchestrator {
       version: 4,
       generatedAt: Math.floor(Date.now() / 1000),
       companionVersion: "1.3.0",
-      sessions: [{ session, deaths, interrupts, ccCoverage, performance, defensiveAudit }],
+      sessions: [{ session, deaths, interrupts, ccCoverage, performance, defensiveAudit, bossTimeline }],
       historicalSnapshots: this.historicalSnapshots.slice(0, 19),
       ...(trend !== undefined ? { trend } : {}),
       ...(distribution !== undefined ? { distribution } : {}),

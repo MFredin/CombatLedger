@@ -114,6 +114,30 @@ function Config:GetActivePreset()
     return (CL.addon and CL.addon.db and CL.addon.db.profile.activePreset) or "Default"
 end
 
+--- Save (create or overwrite) a custom preset.
+--- @param name      string  Display name of the preset
+--- @param activeTab string  Tab ID to switch to when applied (e.g. "overview")
+--- @param role      string|nil  "TANK", "HEALER", "DPS", or nil for all roles
+--- The new preset appears in the filter bar the next time the frame is opened.
+function Config:SaveCustomPreset(name, activeTab, role)
+    if not name or name == "" then return end
+    local profile = (CL.addon and CL.addon.db and CL.addon.db.profile)
+    if not profile then return end
+    profile.customPresets = profile.customPresets or {}
+    profile.customPresets[name] = {
+        filters   = { players = role and { role = role } or {}, pulls = "all" },
+        activeTab = activeTab or "overview",
+    }
+end
+
+--- Delete a custom preset by name.
+--- The chip disappears from the filter bar the next time the frame is opened.
+function Config:DeleteCustomPreset(name)
+    local profile = (CL.addon and CL.addon.db and CL.addon.db.profile)
+    if not profile or not profile.customPresets then return end
+    profile.customPresets[name] = nil
+end
+
 -- ---------------------------------------------------------------------------
 -- WoW class colours
 -- ---------------------------------------------------------------------------

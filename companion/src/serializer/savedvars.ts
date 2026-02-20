@@ -14,6 +14,7 @@ import type { InterruptReport } from "../parser/interrupt.js";
 import type { CCCoverage } from "../parser/cc.js";
 import type { PerformanceReport } from "../parser/performance.js";
 import type { DefensiveAuditReport } from "../parser/defensive.js";
+import type { BossTimeline } from "../parser/timeline.js";
 import type { TrendReport, DistributionReport } from "../storage/sqlite.js";
 
 const MAX_SESSION_BYTES = 500_000;
@@ -29,6 +30,7 @@ interface SerialiseInput {
     ccCoverage?: CCCoverage[];
     performance?: PerformanceReport;
     defensiveAudit?: DefensiveAuditReport;
+    bossTimeline?: BossTimeline;
   }>;
   /** Pre-converted session snapshots loaded from SQLite for historical sessions.
    *  Each element is the JSON-parsed output of a previous sessionToLuaValue call. */
@@ -189,6 +191,29 @@ function defensiveAuditToLuaValue(audit: DefensiveAuditReport): LuaValue {
   };
 }
 
+function timelineToLuaValue(tl: BossTimeline): LuaValue {
+  return {
+    pullDurationSec: tl.pullDurationSec,
+    events: tl.events.map((e) => ({
+      timeIntoPull: Math.round(e.timeIntoPull * 10) / 10,
+      spellId: e.spellId,
+      spellName: e.spellName,
+      casterName: e.casterName,
+      casterGUID: e.casterGUID,
+      importance: e.importance,
+      totalDamageTaken: e.totalDamageTaken,
+      deathsLinked: e.deathsLinked as LuaValue[],
+      impacts: e.impacts.map((i) => ({
+        playerGUID: i.playerGUID,
+        playerName: i.playerName,
+        playerClass: i.playerClass,
+        damageTaken: i.damageTaken,
+        died: i.died,
+      })) as LuaValue[],
+    })) as LuaValue[],
+  };
+}
+
 export function sessionToLuaValue(
   session: EncounterSession,
   deaths: DeathRecap[],
@@ -196,6 +221,7 @@ export function sessionToLuaValue(
   ccCoverage?: CCCoverage[],
   performance?: PerformanceReport,
   defensiveAudit?: DefensiveAuditReport,
+  bossTimeline?: BossTimeline,
 ): Record<string, LuaValue> {
   return {
     encounterId: session.encounterId,
@@ -267,12 +293,13 @@ export function sessionToLuaValue(
       byPlayer: Object.fromEntries(
         Object.entries(interrupts.byPlayer).map(([k, v]) => [
           k,
-          { playerName: v.playerName, intercepted: v.intercepted, opportunities: v.opportunities },
+          { playerGUID: v.playerGUID, playerName: v.playerName, intercepted: v.intercepted, opportunities: v.opportunities },
         ])
       ) as Record<string, LuaValue>,
     },
     performance: performance ? performanceToLuaValue(performance) : {},
     defensiveAudit: defensiveAudit ? defensiveAuditToLuaValue(defensiveAudit) : {},
+    bossTimeline: bossTimeline ? timelineToLuaValue(bossTimeline) : {},
   };
 }
 
@@ -338,8 +365,8 @@ function distributionToLuaValue(dist: DistributionReport): LuaValue {
 
 export function serializeToLua(input: SerialiseInput): string {
   const currentValues: LuaValue[] = input.sessions.map(
-    ({ session, deaths, interrupts, ccCoverage, performance, defensiveAudit }) =>
-      sessionToLuaValue(session, deaths, interrupts, ccCoverage, performance, defensiveAudit)
+    ({ session, deaths, interrupts, ccCoverage, performance, defensiveAudit, bossTimeline }) =>
+      sessionToLuaValue(session, deaths, interrupts, ccCoverage, performance, defensiveAudit, bossTimeline)
   );
   // Append pre-converted historical sessions directly — no re-analysis needed.
   const historicalValues: LuaValue[] = (input.historicalSnapshots ?? []) as LuaValue[];

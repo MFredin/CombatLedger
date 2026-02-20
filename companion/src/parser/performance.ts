@@ -152,14 +152,11 @@ export function buildPerformanceReport(
 
   // ---------------------------------------------------------------------------
   // Merge interrupt counts from already-built InterruptReport
+  // byPlayer is now keyed by GUID — O(1) lookup instead of O(n) name scan.
   // ---------------------------------------------------------------------------
-  for (const [name, pdata] of Object.entries(interrupts.byPlayer ?? {})) {
-    for (const [, acc] of accums) {
-      if (acc.playerName === name) {
-        acc.interruptCount += pdata.intercepted ?? 0;
-        break;
-      }
-    }
+  for (const [guid, pdata] of Object.entries(interrupts.byPlayer ?? {})) {
+    const acc = accums.get(guid);
+    if (acc) acc.interruptCount += pdata.intercepted ?? 0;
   }
 
   // ---------------------------------------------------------------------------
@@ -171,17 +168,13 @@ export function buildPerformanceReport(
   }
 
   // ---------------------------------------------------------------------------
-  // Count CC applied per player from CC coverage source attribution
+  // Count CC applied per player — CCSegment.sourceGUID allows O(1) lookup.
   // ---------------------------------------------------------------------------
   for (const target of _ccCoverage) {
     for (const seg of target.segments) {
-      if (!seg.sourceName) continue;
-      for (const [, acc] of accums) {
-        if (acc.playerName === seg.sourceName) {
-          if (!seg.wasImmune) acc.ccApplied++;
-          break;
-        }
-      }
+      if (!seg.sourceGUID) continue;
+      const acc = accums.get(seg.sourceGUID);
+      if (acc && !seg.wasImmune) acc.ccApplied++;
     }
   }
 
