@@ -2,7 +2,7 @@
 ## Interface-Retail: 120001
 ## Title: CombatLedger
 ## Notes: Post-combat analysis — requires CombatLedger Companion app
-## Version: 1.3.0
+## Version: 1.3.5
 ## Author: MFredin
 ## SavedVariables: CombatLedgerSettings
 ## SavedVariablesPerCharacter: CombatLedgerCharSettings
@@ -58,6 +58,7 @@ tabs\CC.lua
 tabs\History.lua
 tabs\Trends.lua
 tabs\Datasets.lua
+tabs\Timeline.lua
 tabs\Settings.lua
 
 CombatLedger.lua
