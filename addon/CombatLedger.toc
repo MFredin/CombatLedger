@@ -57,5 +57,7 @@ tabs\CC.lua
 tabs\Performance.lua
 tabs\History.lua
 tabs\Trends.lua
+tabs\Datasets.lua
+tabs\Settings.lua
 
 CombatLedger.lua

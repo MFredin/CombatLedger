@@ -655,6 +655,17 @@ select option {
   color: var(--gold);
 }
 
+.btn--danger {
+  background: var(--red-dim);
+  color: var(--red);
+  border: 1px solid var(--red-dim);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--red) 25%, var(--bg-hover));
+  border-color: var(--red);
+}
+
 .btn:disabled {
   opacity: 0.45;
   cursor: default;

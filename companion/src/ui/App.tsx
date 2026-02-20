@@ -4,11 +4,12 @@ import { invoke } from "@tauri-apps/api/core";
 import ActivityTab from "./tabs/ActivityTab.js";
 import HistoryTab from "./tabs/HistoryTab.js";
 import TrendsTab from "./tabs/TrendsTab.js";
+import SettingsTab from "./tabs/SettingsTab.js";
 import { importLogFile } from "../parser/importer.js";
 import type { ImportProgress, ImportSummary } from "../parser/importer.js";
 import { orchestrator } from "../orchestrator.js";
 
-type Tab = "activity" | "history" | "trends";
+type Tab = "activity" | "history" | "trends" | "settings";
 type UpdateStatus = "idle" | "available" | "downloading" | "error";
 type UpdateInfo = { version: string; notes: string };
 type ImportStatus = "idle" | "running" | "done";
@@ -45,6 +46,17 @@ export default function App(): React.ReactElement {
     return () => {
       unlisten?.();
     };
+  }, []);
+
+  // Switch to Settings tab when the tray icon or auto-resolve failure requests it.
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    listen<void>("show-settings-tab", () => {
+      setActiveTab("settings");
+    })
+      .then((fn) => { unlisten = fn; })
+      .catch(console.error);
+    return () => { unlisten?.(); };
   }, []);
 
   // Check for a new release once, a few seconds after the UI settles.
@@ -135,6 +147,7 @@ export default function App(): React.ReactElement {
             ["activity", "Activity"],
             ["history",  "History"],
             ["trends",   "Trends"],
+            ["settings", "Settings"],
           ] as [Tab, string][]
         ).map(([id, label]) => (
           <button
@@ -252,6 +265,7 @@ export default function App(): React.ReactElement {
         {activeTab === "activity" && <ActivityTab status={status} />}
         {activeTab === "history"  && <HistoryTab />}
         {activeTab === "trends"   && <TrendsTab />}
+        {activeTab === "settings" && <SettingsTab />}
       </div>
     </div>
   );

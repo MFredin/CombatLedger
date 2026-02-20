@@ -78,6 +78,11 @@ export class ParserOrchestrator {
     return outputs;
   }
 
+  /** Wipe the in-memory snapshot history (called after a data purge). */
+  clearHistory(): void {
+    this.historicalSnapshots = [];
+  }
+
   /** Force-close any open session (e.g. on app shutdown). */
   async flush(): Promise<SessionOutput | null> {
     const completed = this.segmenter.flush();
