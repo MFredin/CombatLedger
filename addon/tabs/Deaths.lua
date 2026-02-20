@@ -78,7 +78,8 @@ local function buildDeathCard(parent, death, prevCard, onToggle)
     strip:SetColorTexture(cr, cg, cb, 1)
 
     -- Header text: [SPEC] Name — Pull #N — Xm Ys in
-    local specAbbr = (death.playerSpec or "???"):sub(1, 3)
+    local spec = (death.playerSpec and #death.playerSpec > 0) and death.playerSpec or "???"
+    local specAbbr = spec:sub(1, 3)
     local headerLabel = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     headerLabel:SetPoint("LEFT", header, "LEFT", 12, 0)
     headerLabel:SetFormattedText(
