@@ -31,6 +31,28 @@ local function makeLabel(parent, text, x, y, font, r, g, b)
     return fs
 end
 
+--- Themed button: solid bg + centred text, swap colours on hover.
+local function makeBtn(parent, text, bgR, bgG, bgB, txtR, txtG, txtB, hvR, hvG, hvB, hvTxtR, hvTxtG, hvTxtB)
+    local btn = CreateFrame("Button", nil, parent)
+    local bg  = btn:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(btn)
+    bg:SetColorTexture(bgR, bgG, bgB)
+    local lbl = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    lbl:SetAllPoints(btn)
+    lbl:SetJustifyH("CENTER")
+    lbl:SetText(text)
+    lbl:SetTextColor(txtR, txtG, txtB)
+    btn:SetScript("OnEnter", function()
+        bg:SetColorTexture(hvR, hvG, hvB)
+        lbl:SetTextColor(hvTxtR, hvTxtG, hvTxtB)
+    end)
+    btn:SetScript("OnLeave", function()
+        bg:SetColorTexture(bgR, bgG, bgB)
+        lbl:SetTextColor(txtR, txtG, txtB)
+    end)
+    return btn
+end
+
 -- ---------------------------------------------------------------------------
 -- Build the status info card
 -- ---------------------------------------------------------------------------
@@ -201,10 +223,13 @@ local function buildPresetBuilderCard(parent, yOff, onSaved)
     statusFs:SetText("")
 
     -- Save button
-    local saveBtn = CreateFrame("Button", nil, card, "UIPanelButtonTemplate")
+    local saveBtn = makeBtn(card, "Save Preset",
+        C.goldDim.r * 0.3, C.goldDim.g * 0.3, C.goldDim.b * 0.3,
+        C.gold.r, C.gold.g, C.gold.b,
+        C.gold.r * 0.3, C.gold.g * 0.3, C.gold.b * 0.3,
+        1, 1, 1)
     saveBtn:SetSize(120, 22)
     saveBtn:SetPoint("TOPLEFT", card, "TOPLEFT", 10, -180)
-    saveBtn:SetText("Save Preset")
     saveBtn:SetScript("OnClick", function()
         local name = strtrim(nameBox:GetText())
         if name == "" then
@@ -265,11 +290,14 @@ local function buildCustomPresetList(parent, yOff, onDelete)
         local roleKey = (entry.preset.filters and entry.preset.filters.players and entry.preset.filters.players.role) or nil
         detFs:SetFormattedText("%s  /  %s", entry.preset.activeTab or "?", roleKey or "All Roles")
 
-        local delBtn = CreateFrame("Button", nil, card, "UIPanelButtonTemplate")
+        local entryName = entry.name
+        local delBtn = makeBtn(card, "Delete",
+            C.borderSub.r, C.borderSub.g, C.borderSub.b,
+            C.red.r, C.red.g, C.red.b,
+            C.red.r * 0.3, C.red.g * 0.3, C.red.b * 0.3,
+            1, 1, 1)
         delBtn:SetSize(60, 18)
         delBtn:SetPoint("TOPRIGHT", card, "TOPRIGHT", -8, iy + 2)
-        delBtn:SetText("Delete")
-        local entryName = entry.name
         delBtn:SetScript("OnClick", function()
             CL.Config:DeleteCustomPreset(entryName)
             if onDelete then onDelete() end
@@ -303,10 +331,13 @@ local function buildAdvancedSection(parent, yOff, onClear)
     desc:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b)
     desc:SetText("Clear Local Data wipes session data from addon memory for this session.\nTo permanently purge all history use the companion app Settings tab.")
 
-    local clearBtn = CreateFrame("Button", nil, card, "UIPanelButtonTemplate")
+    local clearBtn = makeBtn(card, "Clear Local Data",
+        C.red.r * 0.2, C.red.g * 0.2, C.red.b * 0.2,
+        C.red.r, C.red.g, C.red.b,
+        C.red.r * 0.35, C.red.g * 0.35, C.red.b * 0.35,
+        1, 1, 1)
     clearBtn:SetSize(140, 22)
     clearBtn:SetPoint("BOTTOMLEFT", card, "BOTTOMLEFT", 10, 10)
-    clearBtn:SetText("Clear Local Data")
     clearBtn:SetScript("OnClick", function()
         onClear()
     end)
@@ -388,9 +419,9 @@ function Settings:Render(parent)
     local function updateToggleText()
         advEnabled = (CL.addon and CL.addon.db and CL.addon.db.profile.advancedMode) or false
         if advEnabled then
-            advToggleText:SetText("|cffe8a820[✓]|r |cffe0e8f0Enable advanced features|r")
+            advToggleText:SetText("|cffe8a820[X]|r |cffe0e8f0Enable advanced features|r")
         else
-            advToggleText:SetText("|cff6b7a9a[  ]|r |cff6b7a9aEnable advanced features|r")
+            advToggleText:SetText("|cff6b7a9a[ ]|r |cff6b7a9aEnable advanced features|r")
         end
     end
 
