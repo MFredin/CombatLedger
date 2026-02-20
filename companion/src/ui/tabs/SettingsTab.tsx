@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { getVersion } from "@tauri-apps/api/app";
 import { purgeAllData } from "../../storage/sqlite.js";
 import { orchestrator } from "../../orchestrator.js";
 
@@ -14,7 +15,27 @@ interface LaunchConfig {
   startup_minimized: boolean;
 }
 
-export default function SettingsTab(): React.ReactElement {
+interface UpdateInfo {
+  version: string;
+  notes: string;
+}
+
+type UpdateStatus = "idle" | "available" | "downloading" | "error";
+
+interface Props {
+  updateStatus: UpdateStatus;
+  updateInfo: UpdateInfo | null;
+  onCheckForUpdates: () => void;
+  onInstallUpdate: () => void;
+}
+
+export default function SettingsTab({
+  updateStatus,
+  updateInfo,
+  onCheckForUpdates,
+  onInstallUpdate,
+}: Props): React.ReactElement {
+  const [appVersion, setAppVersion] = useState<string | null>(null);
   // WoW path / account
   const [wowPath, setWowPath]     = useState("");
   const [accounts, setAccounts]   = useState<string[]>([]);
@@ -38,12 +59,14 @@ export default function SettingsTab(): React.ReactElement {
     Promise.all([
       invoke<AppConfig>("get_config"),
       invoke<LaunchConfig>("get_launch_config"),
+      getVersion(),
     ])
-      .then(([cfg, launch]) => {
+      .then(([cfg, launch, ver]) => {
         if (cfg.wow_root) setWowPath(cfg.wow_root);
         if (cfg.account_name) setAccount(cfg.account_name);
         setLaunchAtStartup(launch.launch_at_startup);
         setStartupMinimized(launch.startup_minimized);
+        setAppVersion(ver);
       })
       .catch(console.error);
   }, []);
@@ -201,6 +224,47 @@ export default function SettingsTab(): React.ReactElement {
             </label>
           </div>
         )}
+      </div>
+
+      <hr className="divider" />
+
+      {/* ── Software updates ──────────────────────────────────────── */}
+      <div className="field-group">
+        <div className="field-group__label">Software Updates</div>
+        <div className="field-group__desc" style={{ marginBottom: 8 }}>
+          Current version: <strong>v{appVersion ?? "…"}</strong>
+          {updateStatus === "available" && updateInfo && (
+            <span style={{ color: "var(--accent)", marginLeft: 8 }}>
+              — v{updateInfo.version} available
+            </span>
+          )}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {updateStatus !== "available" && (
+            <button
+              className="btn btn--secondary"
+              onClick={onCheckForUpdates}
+              disabled={updateStatus === "downloading"}
+            >
+              {updateStatus === "downloading" ? "Downloading…" : "Check for Updates"}
+            </button>
+          )}
+          {updateStatus === "available" && updateInfo && (
+            <>
+              <button className="btn btn--primary" onClick={onInstallUpdate}>
+                Install v{updateInfo.version} &amp; Restart
+              </button>
+              <button className="btn btn--secondary" onClick={onCheckForUpdates}>
+                Re-check
+              </button>
+            </>
+          )}
+          {updateStatus === "error" && (
+            <span style={{ fontSize: 11, color: "var(--red)" }}>
+              Update check failed — check your connection.
+            </span>
+          )}
+        </div>
       </div>
 
       <hr className="divider" />

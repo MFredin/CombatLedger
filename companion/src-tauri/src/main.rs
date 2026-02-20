@@ -564,7 +564,8 @@ fn main() {
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
             let open = MenuItem::with_id(app, "open", "Open", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&open, &settings, &quit])?;
+            let check_for_updates = MenuItem::with_id(app, "check_for_updates", "Check for Updates", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&open, &settings, &check_for_updates, &quit])?;
 
             TrayIconBuilder::new()
                 .menu(&menu)
@@ -583,6 +584,15 @@ fn main() {
                         if let Some(win) = app.get_webview_window("main") {
                             let _ = win.show();
                             let _ = win.set_focus();
+                        }
+                    }
+                    "check_for_updates" => {
+                        // Open the window so the user can see the result, then
+                        // tell the frontend to kick off an update check.
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.show();
+                            let _ = win.set_focus();
+                            let _ = win.emit("tray-check-update", ());
                         }
                     }
                     _ => {}

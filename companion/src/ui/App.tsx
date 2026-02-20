@@ -59,21 +59,41 @@ export default function App(): React.ReactElement {
     return () => { unlisten?.(); };
   }, []);
 
+  // Shared update-check logic used by the startup timer and the tray event.
+  async function checkForUpdates() {
+    if (updateStatus === "downloading") return;
+    setUpdateStatus("idle");
+    setUpdateInfo(null);
+    try {
+      const info = await invoke<UpdateInfo | null>("check_update");
+      if (info) {
+        setUpdateInfo(info);
+        setUpdateStatus("available");
+      } else {
+        // Signal "checked, nothing found" briefly so the UI can confirm it.
+        setUpdateStatus("idle");
+      }
+    } catch {
+      // Silent fail — no network or update server unreachable.
+    }
+  }
+
   // Check for a new release once, a few seconds after the UI settles.
   useEffect(() => {
-    const timer = setTimeout(async () => {
-      try {
-        const info = await invoke<UpdateInfo | null>("check_update");
-        if (info) {
-          setUpdateInfo(info);
-          setUpdateStatus("available");
-        }
-      } catch {
-        // Silent fail — no network or update server unreachable.
-      }
-    }, 4000);
+    const timer = setTimeout(() => { void checkForUpdates(); }, 4000);
     return () => clearTimeout(timer);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The tray "Check for Updates" item emits this event.
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    listen<void>("tray-check-update", () => {
+      void checkForUpdates();
+    })
+      .then((fn) => { unlisten = fn; })
+      .catch(console.error);
+    return () => { unlisten?.(); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleInstall() {
     setUpdateStatus("downloading");
@@ -265,7 +285,14 @@ export default function App(): React.ReactElement {
         {activeTab === "activity" && <ActivityTab status={status} />}
         {activeTab === "history"  && <HistoryTab />}
         {activeTab === "trends"   && <TrendsTab />}
-        {activeTab === "settings" && <SettingsTab />}
+        {activeTab === "settings" && (
+          <SettingsTab
+            updateStatus={updateStatus}
+            updateInfo={updateInfo}
+            onCheckForUpdates={() => { void checkForUpdates(); }}
+            onInstallUpdate={() => { void handleInstall(); }}
+          />
+        )}
       </div>
     </div>
   );
