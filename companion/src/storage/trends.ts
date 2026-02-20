@@ -21,7 +21,7 @@ import {
   type DistributionReport,
 } from "./sqlite.js";
 
-const COMPANION_VERSION = "1.1.2";
+const COMPANION_VERSION = "1.2.0";
 
 // ---------------------------------------------------------------------------
 // Build SessionInsert from parsed session data

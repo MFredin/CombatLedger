@@ -330,7 +330,7 @@ async fn purge_all_data(
     if let Some(paths) = &s.wow_paths {
         let empty_lua =
             "CombatLedgerDB = { version = 4, generatedAt = 0, \
-             companionVersion = \"1.1.2\", sessions = {}, historicalSnapshots = {} }\n";
+             companionVersion = \"1.2.0\", sessions = {}, historicalSnapshots = {} }\n";
         let _ = writer::write_saved_variables(&paths.generated_data, empty_lua);
     }
 
