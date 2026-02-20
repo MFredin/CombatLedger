@@ -51,10 +51,10 @@ core\Frame.lua
 
 # ── Tabs ─────────────────────────────────────────────────────────────────────
 tabs\Overview.lua
+tabs\Performance.lua
 tabs\Deaths.lua
 tabs\Interrupts.lua
 tabs\CC.lua
-tabs\Performance.lua
 tabs\History.lua
 tabs\Trends.lua
 tabs\Datasets.lua
