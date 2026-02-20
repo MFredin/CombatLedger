@@ -311,6 +311,34 @@ async fn get_encounters(db: State<'_, Database>) -> Result<Vec<EncounterOption>,
 }
 
 // ---------------------------------------------------------------------------
+// Tauri commands — advanced data management
+// ---------------------------------------------------------------------------
+
+/// Wipe all session data from SQLite and overwrite GeneratedData.lua with an
+/// empty dataset.  This is the "Purge All Data" action exposed in the
+/// Advanced settings panel and cannot be undone.
+#[tauri::command]
+async fn purge_all_data(
+    db: State<'_, Database>,
+    state: State<'_, SharedState>,
+) -> Result<(), String> {
+    db.purge_all_data().map_err(|e| e.to_string())?;
+
+    // Overwrite GeneratedData.lua with an empty dataset so the addon stops
+    // showing stale data immediately after a /reload.
+    let s = state.lock().await;
+    if let Some(paths) = &s.wow_paths {
+        let empty_lua =
+            "CombatLedgerDB = { version = 4, generatedAt = 0, \
+             companionVersion = \"1.1.2\", sessions = {}, historicalSnapshots = {} }\n";
+        let _ = writer::write_saved_variables(&paths.generated_data, empty_lua);
+    }
+
+    db.insert_activity("info", "All session data purged by user.")
+        .map_err(|e| e.to_string())
+}
+
+// ---------------------------------------------------------------------------
 // Tauri commands — launch config & activity log
 // ---------------------------------------------------------------------------
 
@@ -522,9 +550,11 @@ fn main() {
                         let db = handle.state::<Database>();
                         let _ = db.insert_activity("warn", &format!("Auto-resolve failed: {e} — manual setup required"));
                         let _ = handle.emit("status-update", s.status.clone());
-                        // Open settings window so user can manually set path.
-                        if let Some(win) = handle.get_webview_window("settings") {
+                        // Settings are now an in-app tab — show the main
+                        // window and navigate it to the Settings tab.
+                        if let Some(win) = handle.get_webview_window("main") {
                             let _ = win.show();
+                            let _ = win.emit("show-settings-tab", ());
                         }
                     }
                 }
@@ -541,9 +571,12 @@ fn main() {
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "quit" => app.exit(0),
                     "settings" => {
-                        if let Some(win) = app.get_webview_window("settings") {
+                        // Settings now live as an in-app tab — open the main
+                        // window and emit an event so it navigates there.
+                        if let Some(win) = app.get_webview_window("main") {
                             let _ = win.show();
                             let _ = win.set_focus();
+                            let _ = win.emit("show-settings-tab", ());
                         }
                     }
                     "open" => {
@@ -586,6 +619,7 @@ fn main() {
             get_trend,
             get_distribution,
             get_encounters,
+            purge_all_data,
             get_launch_config,
             set_launch_config,
             log_activity,

@@ -188,3 +188,11 @@ export async function getDistribution(
 export async function getEncounters(): Promise<EncounterOption[]> {
   return invoke<EncounterOption[]>("get_encounters");
 }
+
+/**
+ * Wipe all session data from SQLite and reset GeneratedData.lua to empty.
+ * This is the Advanced settings "Purge All Data" action.  It cannot be undone.
+ */
+export async function purgeAllData(): Promise<void> {
+  return invoke<void>("purge_all_data");
+}

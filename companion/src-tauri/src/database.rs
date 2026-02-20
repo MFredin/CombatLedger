@@ -611,6 +611,19 @@ impl Database {
         Ok(results)
     }
 
+    /// Delete every session, player metric row, and activity log entry, then
+    /// VACUUM the database.  Triggered by the Advanced settings purge action.
+    /// Cannot be undone.  player_metrics rows cascade-delete with sessions.
+    pub fn purge_all_data(&self) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute_batch(
+            "DELETE FROM sessions;
+             DELETE FROM activity_log;
+             VACUUM;",
+        )?;
+        Ok(())
+    }
+
     /// Append a line to the activity log.
     pub fn insert_activity(&self, level: &str, message: &str) -> Result<()> {
         let conn = self.conn.lock().unwrap();

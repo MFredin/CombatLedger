@@ -116,6 +116,20 @@ function Data:GetSessionCount()
     return #self:GetSessions()
 end
 
+--- Returns all sessions: live session(s) merged with historical snapshots.
+--- Useful for aggregate views (Datasets tab) where the full history is needed.
+function Data:GetAllSessions()
+    if not self.db then return {} end
+    local all = {}
+    for _, s in ipairs(self.db.sessions or {}) do
+        table.insert(all, s)
+    end
+    for _, s in ipairs(self.db.historicalSnapshots or {}) do
+        table.insert(all, s)
+    end
+    return all
+end
+
 -- ---------------------------------------------------------------------------
 -- Phase 3 — Trend accessors
 -- ---------------------------------------------------------------------------

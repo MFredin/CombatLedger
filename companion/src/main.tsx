@@ -10,10 +10,8 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 import { orchestrator } from "./orchestrator.js";
 import App from "./ui/App.js";
-import SettingsWindow from "./ui/windows/SettingsWindow.js";
 import "./ui/styles/global.css";
 
 // ---------------------------------------------------------------------------
@@ -88,23 +86,13 @@ async function initLogListener(): Promise<void> {
 const rootEl = document.getElementById("root");
 if (!rootEl) throw new Error("Root element not found");
 
-const windowLabel = getCurrentWindow().label;
+// Start log pipeline alongside the UI.
+initLogListener().catch((err) =>
+  console.error("[CombatLedger] Log listener failed:", err)
+);
 
-if (windowLabel === "settings") {
-  ReactDOM.createRoot(rootEl).render(
-    <React.StrictMode>
-      <SettingsWindow />
-    </React.StrictMode>
-  );
-} else {
-  // Start log pipeline alongside the UI.
-  initLogListener().catch((err) =>
-    console.error("[CombatLedger] Log listener failed:", err)
-  );
-
-  ReactDOM.createRoot(rootEl).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
-}
+ReactDOM.createRoot(rootEl).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);

@@ -24,6 +24,8 @@ Config.defaults = {
         activePreset = "Default",
         -- User-defined presets (name → preset table)
         customPresets = {},
+        -- Advanced features toggle (Settings tab danger zone)
+        advancedMode = false,
     },
     char = {
         -- Per-character UI preferences if needed
