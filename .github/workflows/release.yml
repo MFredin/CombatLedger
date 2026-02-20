@@ -94,7 +94,7 @@ jobs:
 
             ### Changelog
             See [CHANGELOG.md](https://github.com/MFredin/CombatLedger/blob/main/CHANGELOG.md) for details.
-          releaseDraft: false
+          releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
 
@@ -128,3 +128,22 @@ jobs:
         run: gh release upload ${{ github.ref_name }} "dist/CombatLedger-${{ steps.version.outputs.VERSION }}.zip" --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ---------------------------------------------------------------------------
+  # Publish the draft release once all builds and packaging are complete.
+  # Keeping builds as drafts prevents users from downloading a partial release
+  # and eliminates the latest.json race condition that occurs when multiple
+  # platform builds upload their update manifest simultaneously.
+  # ---------------------------------------------------------------------------
+  finalize-release:
+    needs: package-addon
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Publish release
+        run: gh release edit "${{ github.ref_name }}" --draft=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
