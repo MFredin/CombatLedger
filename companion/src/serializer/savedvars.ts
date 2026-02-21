@@ -194,6 +194,13 @@ function defensiveAuditToLuaValue(audit: DefensiveAuditReport): LuaValue {
 function timelineToLuaValue(tl: BossTimeline): LuaValue {
   return {
     pullDurationSec: tl.pullDurationSec,
+    phases: tl.phases.map((p) => ({
+      index: p.index,
+      phaseName: p.phaseName,
+      startSec: Math.round(p.startSec * 10) / 10,
+      endSec: Math.round(p.endSec * 10) / 10,
+      isIntermission: p.isIntermission,
+    })) as LuaValue[],
     events: tl.events.map((e) => ({
       timeIntoPull: Math.round(e.timeIntoPull * 10) / 10,
       spellId: e.spellId,
@@ -201,6 +208,7 @@ function timelineToLuaValue(tl: BossTimeline): LuaValue {
       casterName: e.casterName,
       casterGUID: e.casterGUID,
       importance: e.importance,
+      phaseIndex: e.phaseIndex,
       totalDamageTaken: e.totalDamageTaken,
       deathsLinked: e.deathsLinked as LuaValue[],
       impacts: e.impacts.map((i) => ({
@@ -224,6 +232,7 @@ export function sessionToLuaValue(
   bossTimeline?: BossTimeline,
 ): Record<string, LuaValue> {
   return {
+    runId: session.runId,
     encounterId: session.encounterId,
     encounterName: session.encounterName,
     difficulty: session.difficulty,

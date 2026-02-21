@@ -19,6 +19,10 @@ export interface CombatantInfo {
 }
 
 export interface EncounterSession {
+  /** Identifies which zone visit (dungeon run / raid lockout) this pull belongs to.
+   *  All sessions with the same runId were recorded in the same continuous zone session.
+   *  Resets on ZONE_CHANGED_NEW_AREA. */
+  runId: string;
   encounterId: number;
   encounterName: string;
   difficulty: number;
@@ -29,6 +33,13 @@ export interface EncounterSession {
   pullNumber: number;       // 1-indexed within the zone session
   events: ParsedEvent[];
   combatants: CombatantInfo[];
+}
+
+/** Generate a lightweight unique ID without importing crypto. */
+function newRunId(): string {
+  const t = Date.now().toString(36);
+  const r = Math.random().toString(36).slice(2, 9);
+  return `${t}-${r}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -43,13 +54,15 @@ export class SessionSegmenter {
   private currentEvents: ParsedEvent[] = [];
   private currentCombatants: CombatantInfo[] = [];
   private pullNumber = 1;
+  private runId = newRunId();   // reset on every zone change
 
   /** Feed a parsed event into the segmenter. Returns a completed session if one just closed. */
   feed(event: ParsedEvent): EncounterSession | null {
     switch (event.subevent) {
       case "ZONE_CHANGED_NEW_AREA":
-        // Reset pull counter on zone change.
+        // Reset pull counter and run ID on zone change.
         this.pullNumber = 1;
+        this.runId = newRunId();
         if (this.currentSession) {
           // Close any open session (e.g. mid-boss wipe, then zone out).
           this.closeCurrentSession(new Date(), false);
@@ -63,6 +76,7 @@ export class SessionSegmenter {
           this.closeCurrentSession(e.timestamp, false);
         }
         this.currentSession = {
+          runId: this.runId,
           encounterId: e.encounterId,
           encounterName: e.encounterName,
           difficulty: e.difficulty,
@@ -117,6 +131,7 @@ export class SessionSegmenter {
   private closeCurrentSession(endTime: Date, success: boolean): EncounterSession {
     const partial = this.currentSession!;
     const session: EncounterSession = {
+      runId: partial.runId ?? this.runId,
       encounterId: partial.encounterId ?? 0,
       encounterName: partial.encounterName ?? "Unknown",
       difficulty: partial.difficulty ?? 0,
