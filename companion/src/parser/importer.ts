@@ -77,9 +77,9 @@ export async function importLogFile(
           if (!result.ok) continue;
 
           const completed = segmenter.feed(result.value);
-          if (completed) {
+          for (const session of completed) {
             summary.sessionsFound++;
-            const imported = await importOneSession(completed);
+            const imported = await importOneSession(session);
             if (imported) summary.sessionsImported++;
             else summary.sessionsSkipped++;
           }
@@ -94,11 +94,11 @@ export async function importLogFile(
       (await unlistenLines)();
       (await unlistenDone)();
 
-      // Flush any session that was open at EOF.
+      // Flush any sessions that were open at EOF.
       const remaining = segmenter.flush();
-      if (remaining) {
+      for (const session of remaining) {
         summary.sessionsFound++;
-        const imported = await importOneSession(remaining);
+        const imported = await importOneSession(session);
         if (imported) summary.sessionsImported++;
         else summary.sessionsSkipped++;
       }
