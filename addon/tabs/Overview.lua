@@ -55,7 +55,7 @@ function Overview:Render(parent)
         else
             CL.Frame:ShowEmptyState(
                 "No sessions recorded yet.",
-                "Run a dungeon or raid encounter and /reload."
+                "Run a Mythic+ dungeon and /reload."
             )
         end
         return
@@ -94,17 +94,14 @@ function Overview:Render(parent)
     encName:SetTextColor(C.textPrimary.r, C.textPrimary.g, C.textPrimary.b)
     encName:SetText(session.encounterName or "Unknown Encounter")
 
-    -- Pull / run label, result, duration
+    -- Pull label, result, duration
     local resultColor = session.success and "|cff40e87a" or "|cffe84040"
     local resultText  = session.success and "KILL" or "WIPE"
-    local isDungeon   = not CL.Config:IsRaidSession(session)
-    local runLabel    = isDungeon and "Run" or "Pull"
     local pullLabel = hCard:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     pullLabel:SetPoint("BOTTOMLEFT", hCard, "BOTTOMLEFT", 14, 10)
     pullLabel:SetTextColor(C.textMuted.r, C.textMuted.g, C.textMuted.b)
     pullLabel:SetText(string.format(
-        "%s #%d  ·  %s%s|r  ·  %s",
-        runLabel,
+        "Pull #%d  ·  %s%s|r  ·  %s",
         session.pullNumber or 1,
         resultColor, resultText,
         CL.Data:FormatDuration(session.durationSec or 0)
@@ -132,19 +129,11 @@ function Overview:Render(parent)
     local deathColor = deaths == 0 and C.green or C.red
     statCounter("DEATHS",   tostring(deaths), deathColor, -16)
 
-    -- In dungeon mode interrupts are critical — always show in blue with a
-    -- brighter shade for emphasis regardless of the actual rate.
-    local intColor
-    if isDungeon then
-        intColor = intPct >= 80 and C.blue
-                or intPct >= 50 and { r = C.blue.r * 0.75, g = C.blue.g * 0.75, b = 1.0 }
-                or C.red
-    else
-        intColor = intPct >= 80 and C.green
-                or intPct >= 50 and { r = C.gold.r, g = C.gold.g, b = C.gold.b }
-                or C.red
-    end
-    statCounter(isDungeon and "INTERRUPT" or "INT%",
+    -- Interrupts are the primary M+ metric — show in blue.
+    local intColor = intPct >= 80 and C.blue
+                  or intPct >= 50 and { r = C.blue.r * 0.75, g = C.blue.g * 0.75, b = 1.0 }
+                  or C.red
+    statCounter("INTERRUPT",
                 string.format("%.0f%%", intPct), intColor, -96)
     statCounter("CC%",      string.format("%.0f%%", ccPct),
                 ccPct >= 80 and C.green or ccPct >= 50 and { r = C.gold.r, g = C.gold.g, b = C.gold.b } or C.red,

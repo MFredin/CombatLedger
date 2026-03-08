@@ -13,7 +13,6 @@ import { buildInterruptReport } from "./interrupt.js";
 import { buildCCCoverage } from "./cc.js";
 import { buildPerformanceReport } from "./performance.js";
 import { buildDefensiveAudit } from "./defensive.js";
-import { buildBossTimeline } from "./timeline.js";
 import { GuidResolver } from "../enrichment/guid.js";
 import { serializeToLua, sessionToLuaValue } from "../serializer/savedvars.js";
 import { persistAndAnalyze } from "../storage/trends.js";
@@ -69,8 +68,8 @@ export class ParserOrchestrator {
       const result = parseLine(line);
       if (!result.ok) continue;
 
-      const completed = this.segmenter.feed(result.value);
-      if (completed) {
+      const completedSessions = this.segmenter.feed(result.value);
+      for (const completed of completedSessions) {
         const output = await this.processSession(completed);
         outputs.push(output);
       }
@@ -84,11 +83,14 @@ export class ParserOrchestrator {
     this.historicalSnapshots = [];
   }
 
-  /** Force-close any open session (e.g. on app shutdown). */
-  async flush(): Promise<SessionOutput | null> {
-    const completed = this.segmenter.flush();
-    if (!completed) return null;
-    return this.processSession(completed);
+  /** Force-close any open sessions (e.g. on app shutdown). */
+  async flush(): Promise<SessionOutput[]> {
+    const completedSessions = this.segmenter.flush();
+    const outputs: SessionOutput[] = [];
+    for (const completed of completedSessions) {
+      outputs.push(await this.processSession(completed));
+    }
+    return outputs;
   }
 
   /** Build analysis output, persist to SQLite, and serialise to Lua. */
@@ -116,14 +118,11 @@ export class ParserOrchestrator {
     const ccCoverage = buildCCCoverage(session);
     const performance = buildPerformanceReport(session, resolver, interrupts, deaths, ccCoverage);
     const defensiveAudit = buildDefensiveAudit(session, resolver, deaths);
-    // Boss timeline — Raid sessions only (groupSize > 5).  For dungeons the
-    // data is still computed but the addon tab is gated behind isRaid.
-    const bossTimeline = buildBossTimeline(session, deaths, resolver);
 
     // Build a pre-converted snapshot for this session so it can be stored in
     // SQLite and reused as historical data in future companion runs.
     const snapshot = sessionToLuaValue(
-      session, deaths, interrupts, ccCoverage, performance, defensiveAudit, bossTimeline,
+      session, deaths, interrupts, ccCoverage, performance, defensiveAudit,
     ) as Record<string, unknown>;
 
     // Phase 3: persist to SQLite and retrieve trend/distribution data.
@@ -149,7 +148,7 @@ export class ParserOrchestrator {
       version: 4,
       generatedAt: Math.floor(Date.now() / 1000),
       companionVersion: "1.3.5",
-      sessions: [{ session, deaths, interrupts, ccCoverage, performance, defensiveAudit, bossTimeline }],
+      sessions: [{ session, deaths, interrupts, ccCoverage, performance, defensiveAudit }],
       historicalSnapshots: this.historicalSnapshots.slice(0, 19),
       ...(trend !== undefined ? { trend } : {}),
       ...(distribution !== undefined ? { distribution } : {}),
