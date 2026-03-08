@@ -376,64 +376,6 @@ end
 -- ---------------------------------------------------------------------------
 
 function Frame:BuildPresetSelector(filterBar)
-    -- ── RAID / DUNGEON toggle pill (right side of filter bar) ─────────────
-    local PILL_W, PILL_H = 68, 22
-
-    local raidBtn = CreateFrame("Button", nil, filterBar)
-    raidBtn:SetSize(PILL_W, PILL_H)
-    raidBtn:SetPoint("RIGHT", filterBar, "RIGHT", -PILL_W - 4, 0)
-    local raidBg = raidBtn:CreateTexture(nil, "BACKGROUND")
-    raidBg:SetAllPoints(raidBtn)
-    local raidLbl = raidBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    raidLbl:SetAllPoints(raidBtn); raidLbl:SetJustifyH("CENTER"); raidLbl:SetText("RAID")
-    -- 1px border
-    local function pillEdge(btn, point, isH)
-        local e = btn:CreateTexture(nil, "BORDER")
-        e:SetColorTexture(C.borderVis.r, C.borderVis.g, C.borderVis.b)
-        if isH then e:SetHeight(1) else e:SetWidth(1) end
-        e:SetPoint(point, btn, point)
-        if isH then
-            local opp = point:find("TOP") and "TOPRIGHT" or "BOTTOMRIGHT"
-            e:SetPoint(opp, btn, opp)
-        else
-            local opp = point:find("LEFT") and "BOTTOMLEFT" or "BOTTOMRIGHT"
-            e:SetPoint(opp, btn, opp)
-        end
-    end
-    pillEdge(raidBtn, "TOPLEFT",     true);  pillEdge(raidBtn, "BOTTOMLEFT",  true)
-    pillEdge(raidBtn, "TOPLEFT",     false); pillEdge(raidBtn, "TOPRIGHT",    false)
-
-    local dungeonBtn = CreateFrame("Button", nil, filterBar)
-    dungeonBtn:SetSize(PILL_W, PILL_H)
-    dungeonBtn:SetPoint("RIGHT", filterBar, "RIGHT", -2, 0)
-    local dungeonBg = dungeonBtn:CreateTexture(nil, "BACKGROUND")
-    dungeonBg:SetAllPoints(dungeonBtn)
-    local dungeonLbl = dungeonBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    dungeonLbl:SetAllPoints(dungeonBtn); dungeonLbl:SetJustifyH("CENTER"); dungeonLbl:SetText("DUNGEON")
-    pillEdge(dungeonBtn, "TOPLEFT",  true);  pillEdge(dungeonBtn, "BOTTOMLEFT",  true)
-    pillEdge(dungeonBtn, "TOPLEFT",  false); pillEdge(dungeonBtn, "TOPRIGHT",    false)
-
-    -- Divider between toggle and presets
-    local toggleDiv = filterBar:CreateTexture(nil, "OVERLAY")
-    toggleDiv:SetWidth(1); toggleDiv:SetHeight(18)
-    toggleDiv:SetPoint("RIGHT", raidBtn, "LEFT", -8, 0)
-    toggleDiv:SetColorTexture(C.borderSub.r, C.borderSub.g, C.borderSub.b)
-
-    self.raidPill    = { bg = raidBg,    lbl = raidLbl    }
-    self.dungeonPill = { bg = dungeonBg, lbl = dungeonLbl }
-
-    raidBtn:SetScript("OnClick", function()
-        CL.Config:SetViewMode("raid")
-        self:RefreshViewToggle()
-        self:SwitchTab(self.activeTab or "overview")
-    end)
-    dungeonBtn:SetScript("OnClick", function()
-        CL.Config:SetViewMode("dungeon")
-        self:RefreshViewToggle()
-        self:SwitchTab(self.activeTab or "overview")
-    end)
-    self:RefreshViewToggle()
-
     -- ── Preset label + chips (left side) ──────────────────────────────────
     local presetLabel = filterBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     presetLabel:SetPoint("LEFT", filterBar, "LEFT", 10, 0)
@@ -519,26 +461,6 @@ function Frame:RefreshPresetHighlight()
             end
             pbtn.lbl:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b)
         end
-    end
-end
-
--- ---------------------------------------------------------------------------
--- View-mode toggle highlight
--- ---------------------------------------------------------------------------
-
-function Frame:RefreshViewToggle()
-    if not self.raidPill or not self.dungeonPill then return end
-    local mode = CL.Config:GetViewMode()
-    if mode == "raid" then
-        self.raidPill.bg:SetColorTexture(C.gold.r * 0.15, C.gold.g * 0.15, C.gold.b * 0.15)
-        self.raidPill.lbl:SetTextColor(C.gold.r, C.gold.g, C.gold.b)
-        self.dungeonPill.bg:SetColorTexture(C.panelBg.r, C.panelBg.g, C.panelBg.b)
-        self.dungeonPill.lbl:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b)
-    else
-        self.raidPill.bg:SetColorTexture(C.panelBg.r, C.panelBg.g, C.panelBg.b)
-        self.raidPill.lbl:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b)
-        self.dungeonPill.bg:SetColorTexture(C.blue.r * 0.15, C.blue.g * 0.15, C.blue.b * 0.15)
-        self.dungeonPill.lbl:SetTextColor(C.blue.r, C.blue.g, C.blue.b)
     end
 end
 

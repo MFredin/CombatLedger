@@ -15,8 +15,6 @@ Config.defaults = {
         -- UI state
         framePoint = { point = "CENTER", x = 0, y = 0 },
         lastActiveTab = "overview",
-        -- Raid / Dungeon view mode ("raid" | "dungeon")
-        viewMode = "raid",
         -- Filters
         filters = {
             players = {},    -- empty = all players
@@ -157,40 +155,6 @@ Config.classColours = {
     WARLOCK      = { r = 0.53, g = 0.53, b = 0.93 },
     WARRIOR      = { r = 0.78, g = 0.61, b = 0.43 },
 }
-
--- ---------------------------------------------------------------------------
--- Raid / Dungeon view mode helpers
--- ---------------------------------------------------------------------------
-
---- Returns the current view mode ("raid" or "dungeon").
-function Config:GetViewMode()
-    return (CL.addon and CL.addon.db and CL.addon.db.profile.viewMode) or "raid"
-end
-
---- Persist the view mode selection.
-function Config:SetViewMode(mode)
-    if CL.addon and CL.addon.db then
-        CL.addon.db.profile.viewMode = mode
-    end
-end
-
---- Returns true when `session` belongs to a raid (groupSize > 5).
---- Falls back to true (show everything) when groupSize is absent.
-function Config:IsRaidSession(session)
-    if not session then return true end
-    local gs = session.groupSize or 0
-    return gs > 5
-end
-
---- Returns true when `session` matches the current view mode.
---- If groupSize is missing the session passes through (neither filtered out).
-function Config:SessionMatchesMode(session)
-    if not session then return true end
-    local gs = session.groupSize or 0
-    if gs == 0 then return true end  -- unknown → show in both modes
-    local mode = self:GetViewMode()
-    return (mode == "raid" and gs > 5) or (mode == "dungeon" and gs <= 5)
-end
 
 -- UI theme colours (matches CombatLedger mockup CSS variables exactly)
 Config.colours = {

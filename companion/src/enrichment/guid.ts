@@ -74,6 +74,12 @@ const SPEC_MAP: Record<number, { class: string; spec: string }> = {
   73: { class: "WARRIOR", spec: "PROTECTION" },
 };
 
+/** Strip the WoW realm suffix from a player name ("CharName-RealmName" → "CharName"). */
+function stripRealm(name: string): string {
+  const idx = name.indexOf("-");
+  return idx > 0 ? name.slice(0, idx) : name;
+}
+
 export class GuidResolver {
   private map: Map<string, PlayerInfo> = new Map();
 
@@ -118,14 +124,14 @@ export class GuidResolver {
       if (b.sourceGUID && b.sourceName && b.sourceName !== b.sourceGUID) {
         const info = this.map.get(b.sourceGUID);
         if (info && info.name === info.guid) {
-          this.map.set(b.sourceGUID, { ...info, name: b.sourceName });
+          this.map.set(b.sourceGUID, { ...info, name: stripRealm(b.sourceName) });
         }
       }
 
       if (b.destGUID && b.destName && b.destName !== b.destGUID) {
         const info = this.map.get(b.destGUID);
         if (info && info.name === info.guid) {
-          this.map.set(b.destGUID, { ...info, name: b.destName });
+          this.map.set(b.destGUID, { ...info, name: stripRealm(b.destName) });
         }
       }
     }
