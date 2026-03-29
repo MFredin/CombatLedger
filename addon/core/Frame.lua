@@ -217,12 +217,40 @@ function Frame:Init()
     closeBtn:SetScript("OnEnter", function() closeBg:SetColorTexture(C.red.r, C.red.g, C.red.b, 0.6) closeX:SetTextColor(1, 1, 1) end)
     closeBtn:SetScript("OnLeave", function() closeBg:SetColorTexture(C.borderVis.r, C.borderVis.g, C.borderVis.b) closeX:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b) end)
 
-    -- Session badge (right of close)
-    local sessionBadge = titleBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    sessionBadge:SetPoint("RIGHT", closeBtn, "LEFT", -10, 0)
-    sessionBadge:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b)
-    sessionBadge:SetText("SESSION #— · NO DATA")
-    self.sessionBadge = sessionBadge
+    -- ── Encounter selector button (replaces the static session badge) ────────
+    -- Clicking it opens a scrollable pull-picker dropdown, similar to Details!
+    local selBtn = CreateFrame("Button", nil, titleBar)
+    selBtn:SetSize(270, 22)
+    selBtn:SetPoint("RIGHT", closeBtn, "LEFT", -10, 0)
+
+    local selBg = selBtn:CreateTexture(nil, "BACKGROUND")
+    selBg:SetAllPoints(selBtn)
+    selBg:SetColorTexture(C.cardBg.r, C.cardBg.g, C.cardBg.b)
+
+    -- 1-px border
+    local sbt = selBtn:CreateTexture(nil, "BORDER"); sbt:SetHeight(1); sbt:SetColorTexture(C.borderSub.r, C.borderSub.g, C.borderSub.b); sbt:SetPoint("TOPLEFT", selBtn, "TOPLEFT"); sbt:SetPoint("TOPRIGHT", selBtn, "TOPRIGHT")
+    local sbb = selBtn:CreateTexture(nil, "BORDER"); sbb:SetHeight(1); sbb:SetColorTexture(C.borderSub.r, C.borderSub.g, C.borderSub.b); sbb:SetPoint("BOTTOMLEFT", selBtn, "BOTTOMLEFT"); sbb:SetPoint("BOTTOMRIGHT", selBtn, "BOTTOMRIGHT")
+    local sbl = selBtn:CreateTexture(nil, "BORDER"); sbl:SetWidth(1);  sbl:SetColorTexture(C.borderSub.r, C.borderSub.g, C.borderSub.b); sbl:SetPoint("TOPLEFT", selBtn, "TOPLEFT"); sbl:SetPoint("BOTTOMLEFT", selBtn, "BOTTOMLEFT")
+    local sbr = selBtn:CreateTexture(nil, "BORDER"); sbr:SetWidth(1);  sbr:SetColorTexture(C.borderSub.r, C.borderSub.g, C.borderSub.b); sbr:SetPoint("TOPRIGHT", selBtn, "TOPRIGHT"); sbr:SetPoint("BOTTOMRIGHT", selBtn, "BOTTOMRIGHT")
+
+    local selText = selBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    selText:SetPoint("LEFT",  selBtn, "LEFT",  6, 0)
+    selText:SetPoint("RIGHT", selBtn, "RIGHT", -14, 0)
+    selText:SetJustifyH("LEFT")
+    selText:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b)
+    selText:SetText("NO DATA")
+
+    local chevron = selBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    chevron:SetPoint("RIGHT", selBtn, "RIGHT", -3, 0)
+    chevron:SetTextColor(C.textMuted.r, C.textMuted.g, C.textMuted.b)
+    chevron:SetText("▾")
+
+    -- sessionBadge alias — UpdateSessionBadge writes here
+    self.sessionBadge = selText
+
+    selBtn:SetScript("OnEnter", function() selBg:SetColorTexture(C.hover.r, C.hover.g, C.hover.b) end)
+    selBtn:SetScript("OnLeave", function() selBg:SetColorTexture(C.cardBg.r, C.cardBg.g, C.cardBg.b) end)
+    selBtn:SetScript("OnClick", function() self:ToggleEncounterDropdown() end)
 
     -- ── Tab bar ───────────────────────────────────────────────────────────
     local tabBar = CreateFrame("Frame", nil, f)
@@ -253,7 +281,7 @@ function Frame:Init()
     local verLabel = bottomBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     verLabel:SetPoint("LEFT", bottomBar, "LEFT", 12, 0)
     verLabel:SetTextColor(C.textMuted.r, C.textMuted.g, C.textMuted.b)
-    verLabel:SetText("CombatLedger v1.3.5  ·  Requires Companion >= 1.3.5")
+    verLabel:SetText("CombatLedger v1.3.6  ·  Requires Companion >= 1.3.6")
 
     -- "Reload Data" button — shows a confirmation popup then calls ReloadUI().
     -- Anchored to the far right; companionStatus sits to its left.
@@ -521,14 +549,187 @@ function Frame:UpdateSessionBadge()
     end
     local session = CL.Data:GetActiveSession()
     if session then
-        local idx = CL.Data.activeSessionIndex or 1
+        local idx   = CL.Data.activeSessionIndex or 1
         local count = CL.Data:GetSessionCount()
-        local diff = session.difficulty and string.format(" · %s", session.difficulty) or ""
-        self.sessionBadge:SetText(string.format("SESSION %d/%d%s", idx, count, diff))
+        local name  = (session.encounterName or "Unknown"):sub(1, 26)
+        local pull  = session.pullNumber or idx
+        local ok    = session.success and "|cff40e87a✓|r" or "|cffe84040✗|r"
+        local perf  = session.performance
+        local dur   = perf and perf.encounterDurationSec and math.floor(perf.encounterDurationSec) or 0
+        local durStr = dur > 60  and string.format(" %dm%ds", math.floor(dur/60), dur%60)
+                    or dur > 0   and string.format(" %ds", dur)
+                    or ""
+        self.sessionBadge:SetText(string.format(
+            "[%d/%d]  #%d %s %s%s", idx, count, pull, name, ok, durStr))
         self.sessionBadge:SetTextColor(C.textSecondary.r, C.textSecondary.g, C.textSecondary.b)
         if self.companionStatus then
             local ver = session.companionVersion and ("v" .. session.companionVersion) or "CONNECTED"
             self.companionStatus:SetText(string.format("|TInterface\\RaidFrame\\ReadyCheck-Ready:10:10|t |cff40e87a%s|r", ver))
+        end
+    end
+end
+
+-- ---------------------------------------------------------------------------
+-- Encounter selector dropdown
+-- ---------------------------------------------------------------------------
+
+--- Toggle the encounter picker dropdown open/closed.
+function Frame:ToggleEncounterDropdown()
+    if not self.encounterDropdown then
+        self:BuildEncounterDropdown()
+    end
+    if self.encounterDropdown:IsShown() then
+        self.encounterDropdown:Hide()
+    else
+        self:PopulateEncounterDropdown()
+        self.encounterDropdown:Show()
+    end
+end
+
+--- Build the dropdown panel once (called lazily on first open).
+function Frame:BuildEncounterDropdown()
+    -- Invisible click-catcher covers the whole screen; clicking outside closes the panel.
+    local catcher = CreateFrame("Frame", nil, UIParent)
+    catcher:SetAllPoints(UIParent)
+    catcher:SetFrameStrata("DIALOG")
+    catcher:EnableMouse(true)
+    catcher:Hide()
+    catcher:SetScript("OnMouseDown", function()
+        self.encounterDropdown:Hide()
+    end)
+    self.encounterCatcher = catcher
+
+    local dp = CreateFrame("Frame", nil, self.mainFrame)
+    dp:SetWidth(290)
+    dp:SetFrameStrata("DIALOG")
+    -- Anchor top-right of panel to just below the titlebar right edge
+    dp:SetPoint("TOPRIGHT", self.mainFrame, "TOPRIGHT", -1, -(TITLE_H + 1))
+    dp:Hide()
+    setBg(dp, 0.06, 0.07, 0.10)
+
+    -- Border
+    local bt = dp:CreateTexture(nil, "BORDER"); bt:SetHeight(1); bt:SetColorTexture(C.borderVis.r, C.borderVis.g, C.borderVis.b); bt:SetPoint("TOPLEFT", dp, "TOPLEFT"); bt:SetPoint("TOPRIGHT", dp, "TOPRIGHT")
+    local bb = dp:CreateTexture(nil, "BORDER"); bb:SetHeight(1); bb:SetColorTexture(C.borderVis.r, C.borderVis.g, C.borderVis.b); bb:SetPoint("BOTTOMLEFT", dp, "BOTTOMLEFT"); bb:SetPoint("BOTTOMRIGHT", dp, "BOTTOMRIGHT")
+    local bl = dp:CreateTexture(nil, "BORDER"); bl:SetWidth(1);  bl:SetColorTexture(C.borderVis.r, C.borderVis.g, C.borderVis.b); bl:SetPoint("TOPLEFT", dp, "TOPLEFT"); bl:SetPoint("BOTTOMLEFT", dp, "BOTTOMLEFT")
+    local br = dp:CreateTexture(nil, "BORDER"); br:SetWidth(1);  br:SetColorTexture(C.borderVis.r, C.borderVis.g, C.borderVis.b); br:SetPoint("TOPRIGHT", dp, "TOPRIGHT"); br:SetPoint("BOTTOMRIGHT", dp, "BOTTOMRIGHT")
+
+    dp:SetScript("OnShow", function() catcher:Show() end)
+    dp:SetScript("OnHide", function() catcher:Hide() end)
+
+    self.encounterDropdown = dp
+end
+
+--- Re-populate the dropdown with current session data and resize it.
+function Frame:PopulateEncounterDropdown()
+    local dp = self.encounterDropdown
+
+    -- Remove old scroll frame if present
+    if dp._sf then dp._sf:Hide(); dp._sf = nil end
+
+    local sessions = CL.Data:IsAvailable() and CL.Data:GetSessions() or {}
+    local ROW_H     = 22
+    local MAX_ROWS  = 12   -- max visible rows before scrolling
+    local visRows   = math.min(#sessions, MAX_ROWS)
+
+    if visRows == 0 then
+        dp:SetHeight(ROW_H)
+        local empty = dp:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        empty:SetPoint("CENTER", dp, "CENTER")
+        empty:SetText("|cff888888No sessions recorded|r")
+        return
+    end
+
+    dp:SetHeight(visRows * ROW_H + 2)
+
+    local sf = CreateFrame("ScrollFrame", nil, dp)
+    sf:SetPoint("TOPLEFT",     dp, "TOPLEFT",     1, -1)
+    sf:SetPoint("BOTTOMRIGHT", dp, "BOTTOMRIGHT", -1,  1)
+    sf:EnableMouseWheel(true)
+    sf:SetScript("OnMouseWheel", function(self, delta)
+        local cur   = self:GetVerticalScroll()
+        local range = self:GetVerticalScrollRange()
+        self:SetVerticalScroll(math.max(0, math.min(range, cur - delta * ROW_H)))
+    end)
+    dp._sf = sf
+
+    local content = CreateFrame("Frame", nil, sf)
+    content:SetWidth(288)
+    content:SetHeight(#sessions * ROW_H)
+    sf:SetScrollChild(content)
+
+    local activeIdx = CL.Data.activeSessionIndex or 1
+    local lastRunId = nil
+    local yOff      = 0
+
+    for i, session in ipairs(sessions) do
+        -- Thin divider between runs
+        if session.runId ~= lastRunId and lastRunId ~= nil then
+            local div = content:CreateTexture(nil, "OVERLAY")
+            div:SetHeight(1)
+            div:SetPoint("TOPLEFT",  content, "TOPLEFT",  8, -yOff)
+            div:SetPoint("TOPRIGHT", content, "TOPRIGHT", -8, -yOff)
+            div:SetColorTexture(C.borderSub.r, C.borderSub.g, C.borderSub.b)
+        end
+        lastRunId = session.runId
+
+        local row = CreateFrame("Button", nil, content)
+        row:SetPoint("TOPLEFT",  content, "TOPLEFT",  0, -yOff)
+        row:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -yOff)
+        row:SetHeight(ROW_H)
+
+        local isActive = (i == activeIdx)
+        local rowBg = row:CreateTexture(nil, "BACKGROUND")
+        rowBg:SetAllPoints(row)
+        if isActive then
+            rowBg:SetColorTexture(C.gold.r * 0.12, C.gold.g * 0.12, C.gold.b * 0.12)
+        else
+            rowBg:SetColorTexture(0, 0, 0, 0)
+        end
+
+        -- Build row label
+        local pullType = (session.pullType == "trash") and "Trash" or (session.encounterName or "Unknown")
+        local status   = session.success and "|cff40e87a✓|r" or "|cffe84040✗|r"
+        local perf     = session.performance
+        local dur      = perf and perf.encounterDurationSec and math.floor(perf.encounterDurationSec) or 0
+        local durStr   = dur > 60  and string.format(" %dm%ds", math.floor(dur/60), dur%60)
+                      or dur > 0   and string.format(" %ds", dur)
+                      or ""
+        local label    = string.format("  #%-2d  %s  %s%s", session.pullNumber or i, pullType, status, durStr)
+        if isActive then label = "|cffe8a820" .. label .. "|r" end
+
+        local lbl = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        lbl:SetPoint("LEFT",  row, "LEFT",  4, 0)
+        lbl:SetPoint("RIGHT", row, "RIGHT", -4, 0)
+        lbl:SetJustifyH("LEFT")
+        lbl:SetText(label)
+
+        local idx = i  -- upvalue capture
+        row:SetScript("OnClick", function()
+            CL.Data:SetActiveSession(idx)
+            self.encounterDropdown:Hide()
+            self:UpdateSessionBadge()
+            self:RefreshCurrentTab()
+        end)
+        row:SetScript("OnEnter", function()
+            if not isActive then rowBg:SetColorTexture(C.hover.r, C.hover.g, C.hover.b, 0.5) end
+        end)
+        row:SetScript("OnLeave", function()
+            if not isActive then rowBg:SetColorTexture(0, 0, 0, 0) end
+        end)
+
+        yOff = yOff + ROW_H
+    end
+
+    content:SetHeight(yOff)
+end
+
+--- Re-render the currently active tab (called after changing active session).
+function Frame:RefreshCurrentTab()
+    if self.activeTab then
+        local def = self.tabDefs[self.activeTab]
+        if def and def.module then
+            def.module:Hide(self.contentArea)
+            def.module:Render(self.contentArea)
         end
     end
 end

@@ -154,6 +154,16 @@ async function importOneSession(session: EncounterSession): Promise<boolean> {
 
     const resolver = new GuidResolver();
     resolver.populate(session.combatants);
+    resolver.populateNamesFromEvents(session.events);
+
+    // Patch real names back into session.combatants so the serialised snapshot
+    // stores actual player names rather than the GUID placeholder from COMBATANT_INFO.
+    for (const c of session.combatants) {
+      const info = resolver.resolve(c.guid);
+      if (info && info.name !== info.guid) {
+        c.name = info.name;
+      }
+    }
 
     const deaths = buildDeathRecaps(session, resolver);
     const interrupts = buildInterruptReport(session);
