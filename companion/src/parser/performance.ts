@@ -121,11 +121,18 @@ export function buildPerformanceReport(
     return accums.get(guid)!;
   };
 
+  // Build a set of known player GUIDs from COMBATANT_INFO for fallback matching.
+  // If sourceFlags is zero or missing (e.g. log-format variance), we still count
+  // events from GUIDs we positively identified as players via COMBATANT_INFO.
+  const knownPlayerGuids = new Set(resolver.all().map((p) => p.guid));
+
   // ---------------------------------------------------------------------------
   // Single pass over all events — damage and heals only
   // ---------------------------------------------------------------------------
   for (const ev of session.events) {
-    if (!("sourceFlags" in ev) || !isPlayer(ev.sourceFlags)) continue;
+    if (!("sourceFlags" in ev)) continue;
+    const srcGuid = (ev as { sourceGUID?: string }).sourceGUID ?? "";
+    if (!isPlayer(ev.sourceFlags) && !knownPlayerGuids.has(srcGuid)) continue;
 
     const sub = ev.subevent;
 
